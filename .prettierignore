@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+.angular
+coverage
+.next
+.nx
+prisma/migrations
+storage
+uploads
+*.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

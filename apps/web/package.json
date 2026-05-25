@@ -1,0 +1,49 @@
+﻿{
+  "name": "@madcreate/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve --host 0.0.0.0 --port 3013",
+    "build": "ng build && node ../../scripts/generate-version.mjs",
+    "build:prod": "ng build --configuration production",
+    "watch": "ng build --watch --configuration development",
+    "lint": "ng lint",
+    "test": "ng test --watch=false --browsers=ChromeHeadless"
+  },
+  "dependencies": {
+    "@angular/animations": "22.0.0-rc.1",
+    "@angular/cdk": "22.0.0-rc.1",
+    "@angular/common": "22.0.0-rc.1",
+    "@angular/compiler": "22.0.0-rc.1",
+    "@angular/core": "22.0.0-rc.1",
+    "@angular/forms": "22.0.0-rc.1",
+    "@angular/material": "22.0.0-rc.1",
+    "@angular/platform-browser": "22.0.0-rc.1",
+    "@angular/platform-browser-dynamic": "22.0.0-rc.1",
+    "@angular/router": "22.0.0-rc.1",
+    "@madcreate/shared": "workspace:*",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.8.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "22.0.0-rc.1",
+    "@angular/cli": "22.0.0-rc.1",
+    "@angular/compiler-cli": "22.0.0-rc.1",
+    "@types/jasmine": "~5.1.0",
+    "@types/node": "^22.9.0",
+    "autoprefixer": "^10.4.20",
+    "jasmine-core": "~5.4.0",
+    "karma": "~6.4.4",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.1",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^6.0.3"
+  }
+}
+
+

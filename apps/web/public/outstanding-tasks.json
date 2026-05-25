@@ -1,0 +1,5 @@
+{
+  "_comment": "Hand-curated or auto-generated batch of tasks. The /app/claude page 'Import' button POSTs items[] to /v1/claude-tasks/import-bulk which dedupes by trim+lowercase title against existing PENDING/IN_PROGRESS rows. Re-running the import is idempotent. Only 'title' is required per item.",
+  "generated": "2026-05-20",
+  "items": []
+}

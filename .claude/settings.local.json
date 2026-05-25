@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls C:/Code/madleads.ai C:/Code/multisciple 2>&1 | head -100)",
+      "Bash(if [ -d \"/c/Code/madauthor\" ]; then ls /c/Code/madauthor/ | head -30; echo \"---\"; echo \"EXISTS\"; else echo \"MISSING: /c/Code/madauthor does not exist\"; fi)"
+    ]
+  }
+}

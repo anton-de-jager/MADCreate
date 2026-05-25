@@ -1,0 +1,159 @@
+{
+  "items": [
+    {
+      "title": "Implement AuditInterceptor - currently a pass-through stub",
+      "description": "File: apps/api/src/common/interceptors/audit.interceptor.ts. The interceptor is wired globally in apps/api/src/app.module.ts (APP_INTERCEPTOR) but its intercept() just returns next.handle() - no audit row is ever written, even though Prisma has an AuditLog model (prisma/schema.prisma line ~827).\n\nWhat to change:\n1. Inject PrismaService into AuditInterceptor.\n2. After next.handle().pipe(tap(...)) for any non-GET request, write an AuditLog row with: actorUserId (from req.user.sub if present), action (HTTP method + route), targetTable (best-effort from controller path), tenantId (from query/body if present), ip, userAgent.\n3. Skip GETs and health endpoints to avoid log spam.\n4. Wrap the write in try/catch so audit failures never bubble.\n\nAcceptance: hitting POST /v1/tenants creates a row in audit_logs visible via Prisma Studio. No regression on response latency (<10ms overhead).",
+      "priority": 2
+    },
+    {
+      "title": "Add /verify, /reset-password, /magic, /accept-invite Angular routes",
+      "description": "apps/api/src/modules/mail/mail.service.ts sends emails linking to ${appUrl}/verify?token=…, /reset-password?token=…, /magic?token=…, /accept-invite?token=…  - but apps/web/src/app/app.routes.ts has NO matching routes, so every link currently redirects to / via the wildcard fallback.\n\nWhat to change:\n1. Add 4 standalone pages under apps/web/src/app/features/auth/: verify-email.page.ts, reset-password.page.ts, magic-link.page.ts, accept-invite.page.ts.\n2. Each reads ?token= from ActivatedRoute, POSTs to the appropriate /v1/auth endpoint, shows success or error, then redirects to /login or /app/home.\n3. Wire all four into app.routes.ts above the dashboard block (they are public).\n4. /accept-invite should call a new POST /v1/workspaces/invites/accept endpoint (or whatever exists).\n\nAcceptance: clicking a real verification email link lands on a working page, not the landing page.",
+      "priority": 1
+    },
+    {
+      "title": "Lock down /v1/integrations/catalog & /v1/integrations/suggest behind auth",
+      "description": "apps/api/src/modules/integrations/integrations.controller.ts lines 13 and 21 mark catalog() and suggest() as @Public(). The catalog is sensitive product-tier metadata (config schemas, etc.) and suggest() is an enumerable rules engine - both should require an authenticated user.\n\nWhat to change:\n1. Remove @Public() from both endpoints.\n2. Add @ApiBearerAuth() decorators.\n3. Make sure the onboarding flow (apps/web/src/app/features/onboarding/onboarding.page.ts) still works - it should, because the user is already logged in by step 4.\n\nAcceptance: hitting /v1/integrations/catalog without a Bearer token returns 401.",
+      "priority": 1
+    },
+    {
+      "title": "Add @Throttle decorator to auth endpoints (brute-force defence)",
+      "description": "apps/api/src/modules/auth/auth.controller.ts exposes register, login, refresh, password/request-reset, password/reset, email/verify - all @Public(). The global ThrottlerModule in app.module.ts (short=20/s, medium=200/min) is too loose for credential endpoints.\n\nWhat to change:\n1. Add @Throttle({ short: { limit: 5, ttl: 60_000 }, medium: { limit: 20, ttl: 3_600_000 } }) on login, register, password/request-reset.\n2. Add @Throttle({ short: { limit: 10, ttl: 60_000 } }) on email/verify, password/reset, refresh.\n3. Verify ThrottlerModule version supports per-route override.\n\nAcceptance: 6th login attempt within 60s returns 429.",
+      "priority": 1
+    },
+    {
+      "title": "Wire FormSubmission + Lead models to /v1 endpoints",
+      "description": "prisma/schema.prisma defines FormSubmission (line ~789) and Lead (line ~805) but no Nest module exposes either. Visitor sites render contact forms (apps/web/src/app/features/tenant-render/sections/contact.section.ts) yet there's no API to receive a submission. Tenants can't see leads.\n\nWhat to change:\n1. Create apps/api/src/modules/forms with: forms.controller.ts (POST /forms public, GET /forms tenant-scoped), forms.service.ts (creates FormSubmission and optional Lead row).\n2. Create apps/api/src/modules/leads with GET /leads and PATCH /leads/:id for the studio.\n3. Wire contact.section.ts to POST to /v1/forms with tenantId.\n4. Add a 'Leads' page in the dashboard sidebar.\n\nAcceptance: submitting the contact form on a published site creates a FormSubmission visible in the studio.",
+      "priority": 2
+    },
+    {
+      "title": "Dashboard home stats show em-dash placeholders for Sites/AI/Deploys",
+      "description": "apps/web/src/app/features/dashboard/home/home.page.ts lines 117-123: after loading tenants, stats[1..3] are hardcoded to '-'. The user sees Sites, AI gens, Deploys all as dashes.\n\nWhat to change:\n1. Call GET /v1/admin/overview (or a new GET /v1/workspaces/:id/stats) and populate real numbers.\n2. While loading, render skeleton placeholders instead of '0' that flicker.\n3. Acceptance: real counts appear on /app/home.",
+      "priority": 3
+    },
+    {
+      "title": "Marketplace cards are read-only - add 'Use template' action",
+      "description": "apps/web/src/app/features/marketplace/marketplace.page.ts renders template cards but has no button to actually use one. Users can browse but not act.\n\nWhat to change:\n1. Add a 'Use template' button to each card.\n2. On click, navigate to /app/onboarding?templateId=… or POST to /v1/sites { templateSlug } against the current tenant.\n3. Add a backend endpoint POST /v1/templates/:slug/apply { tenantId } that clones the template's pages/sections into a new Site.\n\nAcceptance: clicking 'Use template' creates a new site from the template and redirects to /app/sites/:id.",
+      "priority": 3
+    },
+    {
+      "title": "Marketing landing /demo route is broken (catches wildcard redirect)",
+      "description": "apps/web/src/app/features/marketing/landing/landing.page.ts line 134: <a routerLink=\"/demo\">. No /demo route exists in apps/web/src/app/app.routes.ts so the wildcard ** sends users back to /.\n\nWhat to change: EITHER add a /demo route that opens a real demo tenant slug (e.g. redirect to /demo-tenant) OR remove the button until a demo exists. Pick the redirect approach - seed a 'demo' tenant and redirect /demo → /demo.\n\nAcceptance: 'Open the live demo tenant' lands on a real rendered tenant, not the homepage.",
+      "priority": 2
+    },
+    {
+      "title": "Adopt NotificationService toasts across all mutating pages",
+      "description": "apps/web/src/app/core/services/notification.service.ts exposes a polished confirm()/success()/error() API but is only used in 2 pages (tenants-list, claude). Most mutating pages (settings, themes, domains, deployments, integrations, builder, sites) silently succeed/fail.\n\nWhat to change:\n1. Inject NotificationService into every page that calls .post/.patch/.delete.\n2. On next: call notify.success('Saved'), etc. (specific to action).\n3. On error: call notify.error(e.message ?? 'Something went wrong').\n4. Replace any remaining window.confirm() with notify.confirm().\n\nAcceptance: every mutation in the dashboard shows a toast; no silent failures.",
+      "priority": 3
+    },
+    {
+      "title": "Add skeleton/loading states to pages that fetch on init",
+      "description": "Several pages render blank or 'Loading…' text while initial data fetches: analytics, integrations, themes, deployments, settings. The dashboard home has nice skeletons - copy that pattern.\n\nFiles: apps/web/src/app/features/{analytics,integrations,themes,deployments,settings,media,marketplace}/*.page.ts.\n\nWhat to change: add a loading() signal, set it true in ngOnInit() and false in subscribe next/error, render mc-card p-5 h-N animate-pulse blocks until loaded.\n\nAcceptance: every primary list/detail page shows skeletons until data is loaded.",
+      "priority": 3
+    },
+    {
+      "title": "Settings page lacks danger zone: change password, delete account, leave workspace",
+      "description": "apps/web/src/app/features/settings/settings.page.ts only edits firstName/lastName/timezone and toggles theme. There is no change-password, no delete-account, no leave-workspace, no invite-member UI even though backend has these endpoints.\n\nWhat to change:\n1. Add 'Security' section with change password (POST /v1/auth/password/change or similar - add endpoint if missing).\n2. Add 'Workspace members' section with invite + revoke + role change.\n3. Add 'Danger zone' card with red Delete account button (confirm modal).\n\nAcceptance: a user can change their password, invite a teammate, and delete their account from the settings page.",
+      "priority": 2
+    },
+    {
+      "title": "Builder inspector only edits primitive top-level props - nested objects/arrays are hidden",
+      "description": "apps/web/src/app/features/builder/builder.page.ts line 94-103 only renders inputs for props where isPrimitive() is true. Anything nested (features[].title, primaryCta.label, faq.items[].question) is invisible/uneditable in the inspector. Most section schemas have nested data.\n\nWhat to change:\n1. Recursively render nested objects with collapsible sections.\n2. For arrays, render a list with add/remove buttons per item.\n3. For known shapes (cta = { label, href }), render a labelled mini-form.\n4. Consider a JSON-fallback editor for unknown shapes.\n\nAcceptance: every prop in a hero/cta/features/faq section is editable from the inspector.",
+      "priority": 2
+    },
+    {
+      "title": "Deployments page polls every 5s indefinitely - memory leak risk on long sessions",
+      "description": "apps/web/src/app/features/deployments/deployments.page.ts line 72: interval(5000).subscribe(...). The subscription is cleaned up in ngOnDestroy but ngOnDestroy isn't decorated with implements OnDestroy, and the poll continues even when no deployments are running or the tab is hidden.\n\nWhat to change:\n1. Add `implements OnDestroy` to the class.\n2. Stop polling when all deployments are in a terminal state (SUCCESS/FAILED).\n3. Pause polling when document.visibilityState !== 'visible'.\n4. Consider WebSocket/SSE for live updates instead.\n\nAcceptance: no network requests when the tab is hidden or all deployments are done.",
+      "priority": 3
+    },
+    {
+      "title": "Domains page has no copy-to-clipboard for DNS records",
+      "description": "apps/web/src/app/features/domains/domains.page.ts lines 76-86: the DNS instruction table renders Type/Name/Value/TTL but the user has to manually highlight each value to copy. Add a copy button per row, falling back to navigator.clipboard.\n\nWhat to change: add a small 'Copy' button beside the Value cell that calls navigator.clipboard.writeText(r.value) and toasts 'Copied'. Mobile users especially need this.\n\nAcceptance: each DNS value row has a working copy button with toast feedback.",
+      "priority": 4
+    },
+    {
+      "title": "Media page upload has no progress, no drag-drop, no error toast",
+      "description": "apps/web/src/app/features/media/media.page.ts lines 68-77: file upload is fire-and-forget via firstValueFrom(http.post(...)). No progress bar, no drag-drop zone, no error handling, no validation (size, MIME type), no delete button on the grid.\n\nWhat to change:\n1. Wrap upload in HttpClient with reportProgress: true and render a progress bar.\n2. Wrap the grid in a dropzone (drag/drop + paste handler).\n3. Add per-item Delete button (DELETE /v1/media/:id).\n4. Validate client-side: max 10MB, allowed MIME types.\n5. Show toast on success/error.\n\nAcceptance: large uploads show progress; failures show a toast; drag-drop works.",
+      "priority": 3
+    },
+    {
+      "title": "Themes page only shows a 'Create default theme' button - no edit/duplicate/AI-from-brand",
+      "description": "apps/web/src/app/features/themes/themes.page.ts can only set-active or create-a-default theme. No editor for color tokens, typography, no preview, no AI generation from the tenant brand kit.\n\nWhat to change:\n1. Add an Edit button per theme card → opens a modal/page with color pickers for each token, font selectors, live preview.\n2. Add 'Duplicate' button to clone an existing theme.\n3. Add '✦ Generate from brand' that calls /v1/ai/generate with kind=PALETTE+TYPOGRAPHY using tenant.branding.\n\nAcceptance: user can edit colors via color-picker and see changes reflected in a live preview swatch.",
+      "priority": 3
+    },
+    {
+      "title": "Admin page has no actions - pure read-only table of tenants",
+      "description": "apps/web/src/app/features/admin/admin.page.ts shows tenants in a table but has zero actions: no suspend, no impersonate, no view-as, no per-tenant deep-link. Super-admin should be able to manage.\n\nWhat to change:\n1. Add row action menu: 'View as tenant' (deep-link /app/tenants/:id with super-admin badge), 'Suspend', 'Hard delete'.\n2. Add filters: search by slug/name, status filter, date-range.\n3. Add columns: site count, last deploy, owner email.\n4. Endpoints likely need adding to AdminController.\n\nAcceptance: super-admin can suspend or delete a tenant directly from the admin page.",
+      "priority": 3
+    },
+    {
+      "title": "Analytics page only shows 4 stat cards - no chart, no breakdown, no funnel",
+      "description": "apps/web/src/app/features/analytics/analytics.page.ts renders just views/conversions/AI/deploys totals. No time-series chart, no top-pages table, no referrer breakdown, no funnel - despite Prisma's AnalyticsEvent (line ~770) supporting all of this.\n\nWhat to change:\n1. Add a sparkline / area chart for views-over-time (28 days). Use a tiny chart lib (uPlot, or pure SVG) - no heavy dependency.\n2. Add Top pages table (path, views, conversion %).\n3. Add Referrers table.\n4. Backend: add GET /v1/analytics/timeseries, /v1/analytics/top-pages, /v1/analytics/referrers.\n\nAcceptance: tenant sees a 28-day views chart and top 10 pages with conversion data.",
+      "priority": 3
+    },
+    {
+      "title": "Onboarding has no resume - refresh loses all wizard state",
+      "description": "apps/web/src/app/features/onboarding/onboarding.page.ts holds wizard state in component signals. If the user refreshes mid-wizard, all answers are lost. Step changes don't persist to /v1/onboarding either.\n\nWhat to change:\n1. On every step transition, debounce-save the partial form to localStorage AND to /v1/tenants/:id/onboarding (PATCH).\n2. On load, hydrate from server first, localStorage second.\n3. Add a 'Resume onboarding' card on /app/home if a tenant has incomplete onboarding.\n\nAcceptance: refreshing in the middle of step 4 keeps all answers and the user stays on step 4.",
+      "priority": 2
+    },
+    {
+      "title": "Tenant render contact section has no submit handler - form is decorative",
+      "description": "apps/web/src/app/features/tenant-render/sections/contact.section.ts lines 19-24 renders inputs but has no (ngSubmit) and no FormGroup. A visitor filling it in does nothing. (Pair with the 'Wire FormSubmission' task to POST to /v1/forms.)\n\nWhat to change:\n1. Add a reactive form with name/email/message fields and validation.\n2. On submit POST { tenantId, name, email, message } to /v1/forms (public endpoint).\n3. Show success/error inline, clear the form on success.\n4. Add honeypot field for spam protection.\n\nAcceptance: a visitor submitting the contact form creates a FormSubmission row and sees 'Thanks, we'll be in touch'.",
+      "priority": 2
+    },
+    {
+      "title": "No dark/light system-preference detection; theme toggle isn't persisted properly",
+      "description": "apps/web/src/app/core/services/theme.service.ts (referenced from settings.page.ts) - verify it respects prefers-color-scheme on first load and persists to localStorage. Also: marketing pages should default to user preference rather than always dark.\n\nWhat to change:\n1. On first load, if no localStorage('mc-theme') value, read window.matchMedia('(prefers-color-scheme: dark)') and set accordingly.\n2. Subscribe to changes (matchMedia.addEventListener) when no explicit user pref.\n3. Persist explicit toggles to localStorage and ignore OS changes thereafter.\n4. Apply the chosen mode (data-theme attribute on <html>) before first paint to avoid flash.\n\nAcceptance: visitor on a light-mode OS sees light theme on first visit; toggle persists across reloads.",
+      "priority": 4
+    },
+    {
+      "title": "Pricing page CTA hits /register but doesn't pre-select the plan",
+      "description": "apps/web/src/app/features/marketing/pricing/pricing.page.ts links to /register without ?plan=. When the new user finishes onboarding, they have to figure out billing again.\n\nWhat to change:\n1. Append ?plan=<code> to /register URLs on every pricing card.\n2. RegisterPage reads ?plan= and stashes it in sessionStorage.\n3. After register → onboarding → first dashboard load, kick off Stripe checkout for the stashed plan.\n\nAcceptance: clicking 'Start free' on the Growth plan and finishing signup lands you in the dashboard with a 'Complete checkout: Growth' nudge.",
+      "priority": 4
+    },
+    {
+      "title": "Builder addSection() only knows defaults for 4 of 9 SECTION_KINDS",
+      "description": "apps/web/src/app/features/builder/builder.page.ts lines 161-167: defaults exist for hero/features/cta/faq but the prompt builder (apps/api/src/modules/ai/providers/claude-code-manual.provider.ts) lists 9 SECTION_KINDS (hero, features, pricing, testimonials, stats, faq, cta, contact, generic). Adding e.g. 'testimonials' results in props = { heading: 'New testimonials' } with no items array - section renderer breaks.\n\nWhat to change:\n1. Move a defaults map into @madcreate/shared (packages/shared/src/sections.ts) - single source for backend + frontend.\n2. Add proper defaults for every kind: pricing, testimonials, stats, contact, generic.\n3. Builder imports the shared defaults.\n\nAcceptance: clicking any section in the library produces a renderable section with sensible placeholder data.",
+      "priority": 2
+    },
+    {
+      "title": "Missing favicon + apple-touch-icon + web-app-manifest",
+      "description": "apps/web/src/index.html only registers <link rel=\"icon\" type=\"image/png\" href=\"/icon.png\">. No 16/32/180/512 sizes, no apple-touch-icon, no manifest.json for PWA install. iOS bookmarks will fallback to a screenshot.\n\nWhat to change:\n1. Generate icon-16, icon-32, icon-180 (apple-touch-icon), icon-512.\n2. Add manifest.json with name, short_name, theme_color, background_color, icons array.\n3. Link them all in index.html.\n4. Add og-image (1200x630) and meta og:image / twitter:image.\n\nAcceptance: Lighthouse PWA audit shows manifest installable; iOS Add-to-Home-Screen uses the right icon.",
+      "priority": 4
+    },
+    {
+      "title": "ClaudePromptTemplatesModule packs Service+Controller+DTOs into one 67-line file",
+      "description": "apps/api/src/modules/claude-prompt-templates/claude-prompt-templates.module.ts contains the controller, service, and DTOs inline. This breaks consistency with every other module and makes it hard to test / extend.\n\nWhat to change:\n1. Split into claude-prompt-templates.controller.ts, claude-prompt-templates.service.ts, dto/claude-prompt-template.dto.ts, and a thin claude-prompt-templates.module.ts.\n2. Mirror the structure of claude-tasks module.\n3. Add @Injectable() / @Controller() decorators in dedicated files for tree-shake friendliness.\n\nAcceptance: directory listing matches sibling modules; no functional change.",
+      "priority": 4
+    },
+    {
+      "title": "Site applicator service is new and untested - add e2e for paste-back flow",
+      "description": "apps/api/src/modules/ai/site-applicator.service.ts exists (untracked file per git status) and is invoked by ai.service.ts submitManualOutput(). There are no tests covering parse() or apply().\n\nWhat to change:\n1. Add apps/api/test/ai-paste-back.e2e-spec.ts covering: valid json fenced block, valid object, malformed JSON (must throw BadRequest), partial site (missing pages array), update-existing vs create-new tenant.\n2. Add a unit test apps/api/src/modules/ai/site-applicator.service.spec.ts for parse() edge cases.\n3. Wire into npm test:e2e.\n\nAcceptance: npm run test:e2e --filter=ai-paste-back is green; coverage on site-applicator.service.ts >80%.",
+      "priority": 2
+    },
+    {
+      "title": "API responses leak Prisma internals via thrown errors (no global exception filter)",
+      "description": "Browse apps/api/src/main.ts and modules - there's no global ExceptionFilter. Prisma errors (P2002 unique violations, P2025 not found) bubble as 500s with stack-trace clues about internal table names.\n\nWhat to change:\n1. Create apps/api/src/common/filters/prisma-exception.filter.ts that maps P2002→409 Conflict, P2025→404 Not Found, P2003→400 Bad Request, with generic friendly messages.\n2. Create http-exception.filter.ts that normalizes shape: { statusCode, message, error, requestId }.\n3. Register both via APP_FILTER in app.module.ts.\n4. Hide stack traces in NODE_ENV=production.\n\nAcceptance: registering a duplicate email returns 409 { message: 'Email already in use' } not 500 with Prisma trace.",
+      "priority": 1
+    },
+    {
+      "title": "No CSRF / origin check on cookie-based endpoints; CORS not pinned",
+      "description": "Check apps/api/src/main.ts for app.enableCors(...) - confirm it pins origin to env.WEB_URL only, not '*'. Cookies (if used for refresh) need SameSite=Strict and a CSRF token strategy.\n\nWhat to change:\n1. apps/api/src/main.ts: app.enableCors({ origin: configService.get('web.url'), credentials: true }).\n2. Ensure refresh-token cookie (if set) uses { httpOnly: true, secure: true, sameSite: 'strict' }.\n3. Add a /csrf endpoint issuing a token + double-submit cookie pattern for state-changing requests OR move refresh tokens fully to Authorization header (already the case per AuthController, so this may be a no-op - verify).\n\nAcceptance: cross-origin POST from evil.com is blocked; same-origin app still works.",
+      "priority": 1
+    },
+    {
+      "title": "Storage service stores files on local disk only - no S3/R2 abstraction switch",
+      "description": "apps/api/src/modules/storage/storage.service.ts (referenced by claude-tasks and media) uses local disk. In a multi-replica deploy (DreamHost CloudCompute is single-node now but scaling soon) each replica has its own files - uploads disappear.\n\nWhat to change:\n1. Add an S3-compatible driver (works with Cloudflare R2, Backblaze B2, AWS S3) using @aws-sdk/client-s3.\n2. Switch via STORAGE_DRIVER=local|s3 env var.\n3. Keep local for dev; require S3 in production unless STORAGE_LOCAL_FORCED=1.\n4. Sign URLs for private buckets.\n\nAcceptance: setting STORAGE_DRIVER=s3 with AWS creds uploads to the bucket and serves signed URLs.",
+      "priority": 2
+    },
+    {
+      "title": "AiService.run() rethrows after marking generation FAILED - caller and BullMQ both log it",
+      "description": "apps/api/src/modules/ai/ai.service.ts lines 192-203: on error, the row is updated to FAILED and then `throw err` is re-raised. BullMQ then retries the job per its default retry policy, generating duplicate FAILED states and noisy logs.\n\nWhat to change:\n1. Decide: should AI failures retry? If yes, don't write FAILED on first failure - write a 'retry attempt' counter and only FAILED after maxRetries.\n2. If no, configure the BullMQ processor (search for QUEUE_AI processor) to set attempts: 1 and remove rethrow OR keep rethrow but ensure jobs don't retry.\n3. Logger.error is fine; the rethrow is the issue.\n\nAcceptance: a failing generation produces exactly one FAILED row and one error log line, not 3 retries × 2 lines.",
+      "priority": 3
+    },
+    {
+      "title": "Shared types in @madcreate/shared diverge from Prisma schema in subtle ways",
+      "description": "packages/shared/src/types/ai.ts and packages/shared/src/types/onboarding.ts (both modified per git status) are manually maintained. Diff vs prisma/schema.prisma AIGeneration / Tenant.onboarding shape will drift.\n\nWhat to change:\n1. Add a script scripts/check-shared-types.ts that imports Prisma types and asserts the shape matches the @madcreate/shared exports.\n2. Run it in CI (add to package.json scripts and a GitHub Action).\n3. Where Prisma is source of truth (enums like AIGenerationStatus), re-export from @prisma/client through @madcreate/shared instead of redeclaring.\n\nAcceptance: CI fails if someone adds a Prisma enum value but forgets the shared type update.",
+      "priority": 3
+    }
+  ]
+}

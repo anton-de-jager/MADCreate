@@ -1,0 +1,64 @@
+{
+  "name": "madcreate",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MADCreate — AI-native website & app generation platform by MAD Prospects",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.11.0"
+  },
+  "scripts": {
+    "predev": "pnpm run build:shared",
+    "dev": "npm-run-all --parallel dev:api dev:web",
+    "dev:api": "pnpm --filter @madcreate/api run start:dev",
+    "dev:web": "pnpm --filter @madcreate/web run start",
+    "build": "npm-run-all build:shared build:api build:web",
+    "build:shared": "pnpm --filter @madcreate/shared run build",
+    "build:api": "pnpm --filter @madcreate/api run build",
+    "build:web": "pnpm --filter @madcreate/web run build",
+    "lint": "npm-run-all --parallel lint:api lint:web",
+    "lint:api": "pnpm --filter @madcreate/api run lint",
+    "lint:web": "pnpm --filter @madcreate/web run lint",
+    "test": "npm-run-all --parallel test:api test:web",
+    "test:api": "pnpm --filter @madcreate/api run test",
+    "test:web": "pnpm --filter @madcreate/web run test",
+    "prisma:generate": "prisma generate --schema=database/prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema=database/prisma/schema.prisma",
+    "prisma:deploy": "prisma migrate deploy --schema=database/prisma/schema.prisma",
+    "prisma:push": "prisma db push --schema=database/prisma/schema.prisma",
+    "prisma:studio": "prisma studio --schema=database/prisma/schema.prisma",
+    "prisma:seed": "tsx database/prisma/seed.ts",
+    "docker:up": "docker compose -f deploy/docker-compose.yml up -d",
+    "docker:down": "docker compose -f deploy/docker-compose.yml down",
+    "docker:logs": "docker compose -f deploy/docker-compose.yml logs -f",
+    "docker:build": "docker compose -f deploy/docker-compose.yml build",
+    "deploy:web": "pnpm run build:web && node scripts/deploy-sftp.mjs --target web",
+    "deploy:api": "pnpm run build:api && node scripts/deploy-sftp.mjs --target api",
+    "deploy:all": "npm-run-all deploy:web deploy:api",
+    "check:shared-types": "npx tsx scripts/check-shared-types.ts",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,html,scss,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,html,scss,css}\""
+  },
+  "devDependencies": {
+    "@prisma/client": "^5.22.0",
+    "@types/node": "^22.9.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.3.3",
+    "prisma": "^5.22.0",
+    "tsx": "^4.19.2",
+    "typescript": "~5.6.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ssh2-sftp-client": "^11.0.0"
+  },
+  "overrides": {
+    "rxjs": "^7.8.1",
+    "@prisma/client": "^5.22.0",
+    "typescript": "~5.6.0"
+  },
+  "packageManager": "pnpm@11.2.2"
+}

@@ -1,0 +1,134 @@
+import { PageStatus } from '@prisma/client';
+import { PagesService } from './pages.service';
+import type { JwtPayload } from '@madcreate/shared';
+declare class CreatePageDto {
+    slug: string;
+    title: string;
+    layoutId?: string;
+    order?: number;
+    schema?: unknown;
+}
+declare class UpdatePageDto {
+    slug?: string;
+    title?: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    ogImageUrl?: string;
+    order?: number;
+    layoutId?: string;
+    schema?: unknown;
+    status?: PageStatus;
+}
+export declare class PagesController {
+    private readonly pages;
+    constructor(pages: PagesService);
+    list(user: JwtPayload, siteId: string): Promise<{
+        status: import("@prisma/client").$Enums.PageStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        slug: string;
+        tenantId: string;
+        publishedAt: Date | null;
+        title: string;
+        metaTitle: string | null;
+        metaDescription: string | null;
+        ogImageUrl: string | null;
+        order: number;
+        schema: import("@prisma/client/runtime/library").JsonValue;
+        siteId: string;
+        layoutId: string | null;
+    }[]>;
+    get(user: JwtPayload, id: string): Promise<{
+        status: import("@prisma/client").$Enums.PageStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        slug: string;
+        tenantId: string;
+        publishedAt: Date | null;
+        title: string;
+        metaTitle: string | null;
+        metaDescription: string | null;
+        ogImageUrl: string | null;
+        order: number;
+        schema: import("@prisma/client/runtime/library").JsonValue;
+        siteId: string;
+        layoutId: string | null;
+    }>;
+    create(user: JwtPayload, siteId: string, dto: CreatePageDto): Promise<{
+        status: import("@prisma/client").$Enums.PageStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        slug: string;
+        tenantId: string;
+        publishedAt: Date | null;
+        title: string;
+        metaTitle: string | null;
+        metaDescription: string | null;
+        ogImageUrl: string | null;
+        order: number;
+        schema: import("@prisma/client/runtime/library").JsonValue;
+        siteId: string;
+        layoutId: string | null;
+    }>;
+    update(user: JwtPayload, id: string, dto: UpdatePageDto): Promise<{
+        status: import("@prisma/client").$Enums.PageStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        slug: string;
+        tenantId: string;
+        publishedAt: Date | null;
+        title: string;
+        metaTitle: string | null;
+        metaDescription: string | null;
+        ogImageUrl: string | null;
+        order: number;
+        schema: import("@prisma/client/runtime/library").JsonValue;
+        siteId: string;
+        layoutId: string | null;
+    }>;
+    publish(user: JwtPayload, id: string): Promise<{
+        status: import("@prisma/client").$Enums.PageStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        slug: string;
+        tenantId: string;
+        publishedAt: Date | null;
+        title: string;
+        metaTitle: string | null;
+        metaDescription: string | null;
+        ogImageUrl: string | null;
+        order: number;
+        schema: import("@prisma/client/runtime/library").JsonValue;
+        siteId: string;
+        layoutId: string | null;
+    }>;
+    remove(user: JwtPayload, id: string): Promise<{
+        status: import("@prisma/client").$Enums.PageStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        slug: string;
+        tenantId: string;
+        publishedAt: Date | null;
+        title: string;
+        metaTitle: string | null;
+        metaDescription: string | null;
+        ogImageUrl: string | null;
+        order: number;
+        schema: import("@prisma/client/runtime/library").JsonValue;
+        siteId: string;
+        layoutId: string | null;
+    }>;
+}
+export {};

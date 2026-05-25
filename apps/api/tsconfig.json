@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "target": "ES2022",
+    "sourceMap": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "esModuleInterop": true,
+    "types": ["jest", "node"],
+    "strictPropertyInitialization": false,
+    "isolatedModules": false,
+    "baseUrl": ".",
+    "paths": {
+      "@madcreate/shared": ["../../packages/shared/dist/index.d.ts"],
+      "@madcreate/shared/*": ["../../packages/shared/dist/*"],
+      "@app/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test"]
+}

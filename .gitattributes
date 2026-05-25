@@ -1,0 +1,6 @@
+# Pin server-side shell scripts and Apache vhost configs to LF line endings
+# regardless of the contributor's platform. Bash on Linux chokes on CRLF
+# (e.g. `set -euo pipefail` becomes `set -euo pipefail\r` -> "invalid option").
+apache/*.sh    text eol=lf
+apache/*.conf  text eol=lf
+*.sh           text eol=lf

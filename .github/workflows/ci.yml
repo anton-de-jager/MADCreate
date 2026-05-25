@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma generate --schema=prisma/schema.prisma
+
+      - name: Check shared ↔ Prisma type alignment
+        run: npx tsx scripts/check-shared-types.ts
+
+      - run: npm run build:shared
+      - run: npm run build:api
+      - run: npm run build:web

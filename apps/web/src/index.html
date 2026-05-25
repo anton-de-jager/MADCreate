@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <script>
+    (function(){
+      var k='mc.theme.v1',s;
+      try{s=localStorage.getItem(k)}catch(e){console.warn('Failed to read theme from localStorage:',e)}
+      var m=(s==='dark'||s==='light')?s:
+        (window.matchMedia&&window.matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');
+      document.documentElement.className=m;
+      document.documentElement.setAttribute('data-theme',m);
+    })();
+  </script>
+  <title>MADCreate — Build the future</title>
+  <base href="/" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="MADCreate is an AI-native website and business system generator by MAD Prospects." />
+  <meta name="theme-color" content="#0B0B12" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/icon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta property="og:title" content="MADCreate — Build the future" />
+  <meta property="og:description" content="MADCreate is an AI-native website and business system generator by MAD Prospects." />
+  <meta property="og:image" content="/og-image.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="/og-image.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="bg-surface text-fg antialiased">
+  <mc-root></mc-root>
+</body>
+</html>

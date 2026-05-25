@@ -1,0 +1,50 @@
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { TenantsService } from '../tenants/tenants.service';
+import { AiService } from '../ai/ai.service';
+import type { OnboardingAnswers } from '@madcreate/shared';
+export declare class OnboardingService {
+    private readonly prisma;
+    private readonly tenants;
+    private readonly ai;
+    constructor(prisma: PrismaService, tenants: TenantsService, ai: AiService);
+    saveAnswers(userId: string, tenantId: string, answers: OnboardingAnswers): Promise<{
+        name: string;
+        status: import("@prisma/client").$Enums.SiteStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        description: string | null;
+        slug: string;
+        workspaceId: string;
+        industry: string | null;
+        onboarding: Prisma.JsonValue | null;
+        branding: Prisma.JsonValue | null;
+        activeSiteId: string | null;
+        activeThemeId: string | null;
+    }>;
+    getAnswers(userId: string, tenantId: string): Promise<OnboardingAnswers>;
+    generateFromAnswers(userId: string, tenantId: string): Promise<{
+        error: string | null;
+        status: import("@prisma/client").$Enums.AIGenerationStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        kind: import("@prisma/client").$Enums.AIGenerationKind;
+        startedAt: Date | null;
+        finishedAt: Date | null;
+        durationMs: number | null;
+        tokensIn: number | null;
+        tokensOut: number | null;
+        requesterId: string | null;
+        promptId: string | null;
+        provider: import("@prisma/client").$Enums.AIProvider;
+        model: string;
+        input: Prisma.JsonValue;
+        output: Prisma.JsonValue | null;
+        rawOutput: string | null;
+        costUsd: Prisma.Decimal | null;
+    }>;
+}

@@ -1,0 +1,244 @@
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+import { WorkspacesService } from '../workspaces/workspaces.service';
+export declare class TenantsService {
+    private readonly prisma;
+    private readonly workspaces;
+    constructor(prisma: PrismaService, workspaces: WorkspacesService);
+    list(userId: string, workspaceId: string): Promise<({
+        domains: {
+            status: import("@prisma/client").$Enums.DomainStatus;
+            type: import("@prisma/client").$Enums.DomainType;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date | null;
+            tenantId: string;
+            lastError: string | null;
+            hostname: string;
+            isPrimary: boolean;
+            verifyToken: string | null;
+            lastCheckedAt: Date | null;
+            sslStatus: string | null;
+            sslIssuedAt: Date | null;
+            sslExpiresAt: Date | null;
+            cloudflareId: string | null;
+        }[];
+    } & {
+        name: string;
+        status: import("@prisma/client").$Enums.SiteStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        description: string | null;
+        slug: string;
+        workspaceId: string;
+        industry: string | null;
+        onboarding: Prisma.JsonValue | null;
+        branding: Prisma.JsonValue | null;
+        activeSiteId: string | null;
+        activeThemeId: string | null;
+    })[]>;
+    findAll(userId: string, workspaceId: string): Promise<({
+        domains: {
+            status: import("@prisma/client").$Enums.DomainStatus;
+            type: import("@prisma/client").$Enums.DomainType;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date | null;
+            tenantId: string;
+            lastError: string | null;
+            hostname: string;
+            isPrimary: boolean;
+            verifyToken: string | null;
+            lastCheckedAt: Date | null;
+            sslStatus: string | null;
+            sslIssuedAt: Date | null;
+            sslExpiresAt: Date | null;
+            cloudflareId: string | null;
+        }[];
+    } & {
+        name: string;
+        status: import("@prisma/client").$Enums.SiteStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        description: string | null;
+        slug: string;
+        workspaceId: string;
+        industry: string | null;
+        onboarding: Prisma.JsonValue | null;
+        branding: Prisma.JsonValue | null;
+        activeSiteId: string | null;
+        activeThemeId: string | null;
+    })[]>;
+    get(userId: string, tenantId: string): Promise<{
+        sites: {
+            name: string;
+            settings: Prisma.JsonValue | null;
+            status: import("@prisma/client").$Enums.SiteStatus;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date | null;
+            version: number;
+            tenantId: string;
+            themeId: string | null;
+            navigation: Prisma.JsonValue | null;
+            publishedAt: Date | null;
+        }[];
+        domains: {
+            status: import("@prisma/client").$Enums.DomainStatus;
+            type: import("@prisma/client").$Enums.DomainType;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date | null;
+            tenantId: string;
+            lastError: string | null;
+            hostname: string;
+            isPrimary: boolean;
+            verifyToken: string | null;
+            lastCheckedAt: Date | null;
+            sslStatus: string | null;
+            sslIssuedAt: Date | null;
+            sslExpiresAt: Date | null;
+            cloudflareId: string | null;
+        }[];
+    } & {
+        name: string;
+        status: import("@prisma/client").$Enums.SiteStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        description: string | null;
+        slug: string;
+        workspaceId: string;
+        industry: string | null;
+        onboarding: Prisma.JsonValue | null;
+        branding: Prisma.JsonValue | null;
+        activeSiteId: string | null;
+        activeThemeId: string | null;
+    }>;
+    findOne(userId: string, tenantId: string): Promise<{
+        sites: {
+            name: string;
+            settings: Prisma.JsonValue | null;
+            status: import("@prisma/client").$Enums.SiteStatus;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date | null;
+            version: number;
+            tenantId: string;
+            themeId: string | null;
+            navigation: Prisma.JsonValue | null;
+            publishedAt: Date | null;
+        }[];
+        domains: {
+            status: import("@prisma/client").$Enums.DomainStatus;
+            type: import("@prisma/client").$Enums.DomainType;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            deletedAt: Date | null;
+            tenantId: string;
+            lastError: string | null;
+            hostname: string;
+            isPrimary: boolean;
+            verifyToken: string | null;
+            lastCheckedAt: Date | null;
+            sslStatus: string | null;
+            sslIssuedAt: Date | null;
+            sslExpiresAt: Date | null;
+            cloudflareId: string | null;
+        }[];
+    } & {
+        name: string;
+        status: import("@prisma/client").$Enums.SiteStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        description: string | null;
+        slug: string;
+        workspaceId: string;
+        industry: string | null;
+        onboarding: Prisma.JsonValue | null;
+        branding: Prisma.JsonValue | null;
+        activeSiteId: string | null;
+        activeThemeId: string | null;
+    }>;
+    create(userId: string, workspaceId: string, dto: {
+        slug: string;
+        name: string;
+        industry?: string;
+        description?: string;
+    }): Promise<{
+        name: string;
+        status: import("@prisma/client").$Enums.SiteStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        description: string | null;
+        slug: string;
+        workspaceId: string;
+        industry: string | null;
+        onboarding: Prisma.JsonValue | null;
+        branding: Prisma.JsonValue | null;
+        activeSiteId: string | null;
+        activeThemeId: string | null;
+    }>;
+    update(userId: string, tenantId: string, patch: {
+        name?: string;
+        industry?: string;
+        description?: string;
+        branding?: unknown;
+    }): Promise<{
+        name: string;
+        status: import("@prisma/client").$Enums.SiteStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        description: string | null;
+        slug: string;
+        workspaceId: string;
+        industry: string | null;
+        onboarding: Prisma.JsonValue | null;
+        branding: Prisma.JsonValue | null;
+        activeSiteId: string | null;
+        activeThemeId: string | null;
+    }>;
+    remove(userId: string, tenantId: string): Promise<{
+        name: string;
+        status: import("@prisma/client").$Enums.SiteStatus;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        deletedAt: Date | null;
+        description: string | null;
+        slug: string;
+        workspaceId: string;
+        industry: string | null;
+        onboarding: Prisma.JsonValue | null;
+        branding: Prisma.JsonValue | null;
+        activeSiteId: string | null;
+        activeThemeId: string | null;
+    }>;
+    purge(userId: string, tenantId: string): Promise<{
+        id: string;
+        purged: boolean;
+    }>;
+    purgeAll(userId: string): Promise<{
+        purged: number;
+        ids: string[];
+    }>;
+    private assertSuperAdmin;
+    private uniqueSlug;
+}

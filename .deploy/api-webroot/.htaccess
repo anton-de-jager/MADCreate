@@ -1,0 +1,6 @@
+# madcreateapi.madprospects.com reverse-proxy fallback to PM2 on 127.0.0.1:3005
+# Managed by deploy.ps1 - regenerated on every deploy.
+RewriteEngine On
+RequestHeader set X-Forwarded-Proto "https"
+RequestHeader set X-Forwarded-Host "%{HTTP_HOST}s"
+RewriteRule ^(.*)$ http://127.0.0.1:3005/$1 [P,L]
