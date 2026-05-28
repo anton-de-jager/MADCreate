@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { TenantContextService } from '../../core/services/tenant-context.service';
@@ -23,14 +24,14 @@ const STATUS_OPTIONS = ['new', 'contacted', 'qualified', 'won', 'lost'];
 @Component({
   selector: 'mc-leads',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
   <div class="max-w-6xl mx-auto">
     <div class="flex items-start justify-between mb-8">
       <div>
         <span class="mc-eyebrow">Pipeline</span>
-        <h1 class="mc-heading text-3xl font-bold mt-1">Leads</h1>
+        <h1 class="mc-heading text-3xl font-bold mt-1">Forms & Leads</h1>
         <p class="text-fg-muted mt-1 text-sm">Visitor form submissions, organized by status. New leads land here automatically from any rendered tenant site.</p>
       </div>
       <select class="mc-input !w-auto !py-2" [value]="statusFilter()" (change)="statusFilter.set($any($event.target).value); load()">
@@ -41,7 +42,8 @@ const STATUS_OPTIONS = ['new', 'contacted', 'qualified', 'won', 'lost'];
 
     @if (!tenantId()) {
       <div class="mc-card p-12 text-center text-fg-muted text-sm">
-        Pick a tenant from the sidebar to see its leads.
+        <p class="mb-4">Pick a tenant to see its forms and leads.</p>
+        <a routerLink="/app/tenants" class="mc-btn-primary">Go to tenants</a>
       </div>
     } @else if (loading()) {
       <div class="mc-card p-8 text-center text-fg-muted">Loading…</div>
@@ -49,6 +51,11 @@ const STATUS_OPTIONS = ['new', 'contacted', 'qualified', 'won', 'lost'];
       <div class="mc-card p-12 text-center">
         <p class="text-fg-muted">No leads yet for this tenant.</p>
         <p class="text-xs text-fg-subtle mt-2">When a visitor submits a contact form on the published site, a lead lands here automatically.</p>
+        <div class="flex flex-wrap items-center justify-center gap-2 mt-5">
+          <a routerLink="/app/sites" class="mc-btn-primary">Review site forms</a>
+          <a routerLink="/app/onboarding" class="mc-btn-secondary">Generate lead capture</a>
+          <a routerLink="/app/growth" class="mc-btn-ghost">Open Growth Hub</a>
+        </div>
       </div>
     } @else {
       <div class="mc-card overflow-hidden">

@@ -7,7 +7,7 @@ import { TenantContextService } from '../../core/services/tenant-context.service
 import { ConfirmOverlayComponent } from '../../core/components/confirm-overlay.component';
 import { NotificationService } from '../../core/services/notification.service';
 
-interface NavItem { label: string; href: string; icon: string; section?: string; }
+interface NavItem { label: string; href: string; icon: string; adminOnly?: boolean; queryParams?: Record<string, string>; }
 
 @Component({
   selector: 'mc-dashboard-layout',
@@ -16,6 +16,41 @@ interface NavItem { label: string; href: string; icon: string; section?: string;
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
   <div class="h-screen flex overflow-hidden bg-surface text-fg">
+    @if (mobileOpen()) {
+      <button class="fixed inset-0 z-40 bg-black/60 md:hidden" type="button" aria-label="Close navigation" (click)="mobileOpen.set(false)"></button>
+      <aside class="fixed inset-y-0 left-0 z-50 w-72 bg-surface-raised border-r border-white/10 md:hidden flex flex-col shadow-2xl">
+        <div class="h-16 flex items-center justify-between gap-3 px-5 border-b border-white/5">
+          <a routerLink="/app/home" class="flex items-center gap-2.5" (click)="mobileOpen.set(false)">
+            <img src="/logo-wide-MADCreate.png" alt="MADCreate" class="h-8 w-auto" />
+          </a>
+          <button class="mc-btn-ghost !p-2" type="button" title="Close" (click)="mobileOpen.set(false)">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+        <nav class="flex-1 px-3 py-4 space-y-5 overflow-y-auto">
+          @for (section of visibleSections(); track section.title) {
+            <div>
+              <div class="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-fg-subtle">{{ section.title }}</div>
+              <ul class="space-y-0.5">
+                @for (item of section.items; track item.href + item.label) {
+                  <li>
+                    <a [routerLink]="item.href"
+                       [queryParams]="item.queryParams"
+                       routerLinkActive="bg-white/10 text-fg"
+                       class="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-fg-muted hover:text-fg hover:bg-white/5 transition-colors"
+                       (click)="mobileOpen.set(false)">
+                      <i [class]="item.icon + ' w-5 text-center'"></i>
+                      <span>{{ item.label }}</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </nav>
+      </aside>
+    }
+
     <!-- Sidebar -->
     <aside
       class="hidden md:flex md:flex-col w-64 shrink-0 border-r border-white/5 bg-surface-raised/40 backdrop-blur-xl"
@@ -32,15 +67,16 @@ interface NavItem { label: string; href: string; icon: string; section?: string;
       </div>
 
       <nav class="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
-        @for (section of sections; track section.title) {
+        @for (section of visibleSections(); track section.title) {
           <div>
             @if (!collapsed()) {
               <div class="px-3 mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-fg-subtle">{{ section.title }}</div>
             }
             <ul class="space-y-0.5">
-              @for (item of section.items; track item.href) {
+              @for (item of section.items; track item.href + item.label) {
                 <li>
                   <a [routerLink]="item.href"
+                     [queryParams]="item.queryParams"
                      routerLinkActive="bg-white/10 text-fg"
                      class="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-fg-muted hover:text-fg hover:bg-white/5 transition-colors"
                      [title]="item.label">
@@ -66,6 +102,9 @@ interface NavItem { label: string; href: string; icon: string; section?: string;
     <div class="flex-1 flex flex-col min-w-0">
       <!-- Topbar -->
       <header class="h-16 px-4 md:px-6 flex items-center gap-3 border-b border-white/5 bg-surface/60 backdrop-blur-xl sticky top-0 z-30">
+        <button class="mc-btn-ghost !p-2 md:hidden" type="button" title="Open navigation" (click)="mobileOpen.set(true)">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
         <div class="flex-1 flex items-center gap-3">
           <div class="hidden md:flex items-center gap-2 text-sm">
             <span class="mc-chip">
@@ -129,7 +168,7 @@ interface NavItem { label: string; href: string; icon: string; section?: string;
               <a routerLink="/app/settings" class="block px-3 py-2 text-sm rounded hover:bg-white/5">Settings</a>
               @if (isSuperAdmin()) {
                 <a routerLink="/app/admin"  class="block px-3 py-2 text-sm rounded hover:bg-white/5">Super admin</a>
-                <a routerLink="/app/claude" class="block px-3 py-2 text-sm rounded hover:bg-white/5">Claude tasks</a>
+                <a routerLink="/app/ai" class="block px-3 py-2 text-sm rounded hover:bg-white/5">MADCloud</a>
               }
               <button (click)="logout()" class="block w-full text-left px-3 py-2 text-sm rounded hover:bg-white/5 text-danger">
                 Sign out
@@ -158,6 +197,7 @@ export class DashboardLayout {
   protected readonly theme = inject(ThemeService);
   protected readonly notify = inject(NotificationService);
   protected readonly notifOpen = signal(false);
+  protected readonly mobileOpen = signal(false);
 
   protected readonly collapsed = signal(false);
   protected readonly user = this.auth.user;
@@ -167,39 +207,60 @@ export class DashboardLayout {
 
   protected readonly sections: { title: string; items: NavItem[] }[] = [
     {
-      title: 'Workspace',
+      title: 'Create',
       items: [
         { label: 'Home',         href: '/app/home',         icon: 'fa-solid fa-house' },
+        { label: 'Generate Site', href: '/app/onboarding',  icon: 'fa-solid fa-wand-magic-sparkles' },
         { label: 'Tenants',      href: '/app/tenants',      icon: 'fa-solid fa-building' },
-        { label: 'Sites',        href: '/app/sites',        icon: 'fa-solid fa-globe' },
       ],
     },
     {
       title: 'Build',
       items: [
-        { label: 'Onboarding',   href: '/app/onboarding',   icon: 'fa-solid fa-wand-magic-sparkles' },
+        { label: 'Sites',        href: '/app/sites',        icon: 'fa-solid fa-globe' },
         { label: 'Themes',       href: '/app/themes',       icon: 'fa-solid fa-palette' },
         { label: 'Media',        href: '/app/media',        icon: 'fa-solid fa-images' },
         { label: 'Marketplace',  href: '/app/marketplace',  icon: 'fa-solid fa-store' },
       ],
     },
     {
-      title: 'Ship',
+      title: 'Publish',
       items: [
         { label: 'Domains',      href: '/app/domains',      icon: 'fa-solid fa-link' },
         { label: 'Deployments',  href: '/app/deployments',  icon: 'fa-solid fa-rocket' },
-        { label: 'Integrations', href: '/app/integrations', icon: 'fa-solid fa-plug' },
       ],
     },
     {
       title: 'Grow',
       items: [
-        { label: 'Leads',        href: '/app/leads',        icon: 'fa-solid fa-envelope' },
+        { label: 'Forms & Leads', href: '/app/leads',       icon: 'fa-solid fa-rectangle-list' },
+        { label: 'Growth Hub',   href: '/app/growth',       icon: 'fa-solid fa-chart-simple' },
         { label: 'Analytics',    href: '/app/analytics',    icon: 'fa-solid fa-chart-line' },
+      ],
+    },
+    {
+      title: 'Operate',
+      items: [
+        { label: 'Integrations', href: '/app/integrations', icon: 'fa-solid fa-plug' },
+        { label: 'Billing',      href: '/app/settings',     icon: 'fa-solid fa-credit-card', queryParams: { tab: 'billing' } },
         { label: 'Settings',     href: '/app/settings',     icon: 'fa-solid fa-gear' },
       ],
     },
+    {
+      title: 'Admin',
+      items: [
+        { label: 'MADCloud',     href: '/app/ai',           icon: 'fa-solid fa-cloud', adminOnly: true },
+        { label: 'Super Admin',  href: '/app/admin',        icon: 'fa-solid fa-shield-halved', adminOnly: true },
+      ],
+    },
   ];
+
+  protected visibleSections() {
+    const isAdmin = this.isSuperAdmin();
+    return this.sections
+      .map((section) => ({ ...section, items: section.items.filter((item) => !item.adminOnly || isAdmin) }))
+      .filter((section) => section.items.length > 0);
+  }
 
   protected initial(): string {
     const u = this.user();

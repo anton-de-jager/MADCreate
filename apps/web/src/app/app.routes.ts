@@ -10,10 +10,16 @@ import { superAdminGuard } from './core/guards/super-admin.guard';
 // The renderer comes LAST so it doesn't shadow real platform routes.
 
 export const routes: Routes = [
+  { path: 'ai', canActivate: [authGuard, superAdminGuard], loadComponent: () => import('./features/madcloud-ai/madcloud-ai.page').then((m) => m.MadcloudAiPage) },
+
   // --- Marketing & auth ---
   {
     path: '',
     pathMatch: 'full',
+    loadComponent: () => import('./features/marketing/landing/landing.page').then((m) => m.LandingPage),
+  },
+  {
+    path: 'home',
     loadComponent: () => import('./features/marketing/landing/landing.page').then((m) => m.LandingPage),
   },
   {
@@ -70,12 +76,13 @@ export const routes: Routes = [
       { path: 'domains',      loadComponent: () => import('./features/domains/domains.page').then((m) => m.DomainsPage) },
       { path: 'integrations', loadComponent: () => import('./features/integrations/integrations.page').then((m) => m.IntegrationsPage) },
       { path: 'deployments',  loadComponent: () => import('./features/deployments/deployments.page').then((m) => m.DeploymentsPage) },
+      { path: 'growth',       loadComponent: () => import('./features/growth/growth-hub.page').then((m) => m.GrowthHubPage) },
       { path: 'analytics',    loadComponent: () => import('./features/analytics/analytics.page').then((m) => m.AnalyticsPage) },
       { path: 'leads',        loadComponent: () => import('./features/leads/leads.page').then((m) => m.LeadsPage) },
       { path: 'media',        loadComponent: () => import('./features/media/media.page').then((m) => m.MediaPage) },
       { path: 'marketplace',  loadComponent: () => import('./features/marketplace/marketplace.page').then((m) => m.MarketplacePage) },
       { path: 'settings',     loadComponent: () => import('./features/settings/settings.page').then((m) => m.SettingsPage) },
-      { path: 'claude',       loadComponent: () => import('./features/claude/claude.page').then((m) => m.ClaudePage) },
+      { path: 'ai', canActivate: [superAdminGuard], loadComponent: () => import('./features/madcloud-ai/madcloud-ai.page').then((m) => m.MadcloudAiPage) },
       {
         path: 'admin',
         canActivate: [superAdminGuard],
@@ -83,6 +90,13 @@ export const routes: Routes = [
       },
     ],
   },
+
+  // --- Redirects for common mistyped / legacy URLs ---
+  // Prevent these from falling through to the tenant renderer wildcard.
+  { path: 'contact', redirectTo: '', pathMatch: 'full' },
+  { path: 'builder', redirectTo: 'app/marketplace', pathMatch: 'full' },
+  { path: 'builder/templates', redirectTo: 'app/marketplace', pathMatch: 'full' },
+  { path: 'templates', redirectTo: 'app/marketplace', pathMatch: 'full' },
 
   // --- Dynamic tenant site renderer (LAST) ---
   // /:slug → renders the home page for that tenant.

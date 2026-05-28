@@ -26,7 +26,10 @@ interface Tenant { id: string; slug: string; name: string; status: string; indus
   } @else if (items().length === 0) {
     <div class="mc-card p-12 text-center">
       <p class="text-fg-muted mb-4">No tenants yet.</p>
-      <a routerLink="/app/onboarding" class="mc-btn-primary">Create your first</a>
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <a routerLink="/app/onboarding" class="mc-btn-primary">Create your first</a>
+        <a routerLink="/app/marketplace" class="mc-btn-secondary">Browse templates</a>
+      </div>
     </div>
   } @else {
     <div class="mc-card overflow-hidden">

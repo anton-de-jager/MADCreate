@@ -22,7 +22,10 @@ interface Site { id: string; name: string; status: string; updatedAt: string; _c
   @if (!tenant()) {
     <div class="mc-card p-8 text-center">
       <p class="text-fg-muted mb-3">Pick a tenant first.</p>
-      <a routerLink="/app/tenants" class="mc-btn-primary">Go to tenants</a>
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <a routerLink="/app/tenants" class="mc-btn-primary">Go to tenants</a>
+        <a routerLink="/app/onboarding" class="mc-btn-secondary">Create tenant</a>
+      </div>
     </div>
   } @else if (loading()) {
     <div class="mc-card p-8 text-center text-fg-muted">Loading…</div>
@@ -45,7 +48,11 @@ interface Site { id: string; name: string; status: string; updatedAt: string; _c
       @if (items().length === 0) {
         <div class="mc-card p-8 text-center col-span-full">
           <p class="text-fg-muted mb-3">No sites yet for this tenant.</p>
-          <a routerLink="/app/onboarding" class="mc-btn-primary">Generate one with AI</a>
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            <a routerLink="/app/onboarding" class="mc-btn-primary">Generate one with MADCloud</a>
+            <a routerLink="/app/marketplace" class="mc-btn-secondary">Browse templates</a>
+            <a routerLink="/app/themes" class="mc-btn-ghost">Prepare brand theme</a>
+          </div>
         </div>
       }
     </div>

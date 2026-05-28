@@ -7,7 +7,7 @@
 #   bash install.sh
 #
 # Or one-shot from your laptop (after deploy.ps1 has uploaded apache/ via SFTP):
-#   ssh madprospects@208.113.128.35 'bash /home/madprospects/madcreate-api/apache/install.sh'
+#   ssh madprospects@41.185.110.61 'bash /home/madcreate-api/apache/install.sh'
 
 set -euo pipefail
 

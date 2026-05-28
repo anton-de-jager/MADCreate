@@ -18,9 +18,12 @@ interface TenantDetail { id: string; slug: string; name: string; status: string;
         <h1 class="mc-heading text-3xl font-bold mt-1">{{ t.name }}</h1>
         <p class="text-fg-muted mt-1">/{{ t.slug }} · {{ t.status }}</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center justify-end gap-2">
         <a [routerLink]="['/app/onboarding', t.id]" class="mc-btn-ghost" title="Re-run the onboarding wizard for this tenant — replaces the site, doesn't duplicate the tenant"><i class="fa-solid fa-pen"></i> Edit onboarding</a>
         <a [routerLink]="['/app/studio', t.id]" class="mc-btn-secondary"><i class="fa-solid fa-wand-magic-sparkles"></i> Studio</a>
+        <a routerLink="/app/domains" class="mc-btn-ghost"><i class="fa-solid fa-link"></i> Domains</a>
+        <a routerLink="/app/deployments" class="mc-btn-ghost"><i class="fa-solid fa-rocket"></i> Deploy</a>
+        <a routerLink="/app/analytics" class="mc-btn-ghost"><i class="fa-solid fa-chart-line"></i> Analytics</a>
         <a [href]="'/' + t.slug" target="_blank" class="mc-btn-primary">View site →</a>
       </div>
     </div>
@@ -39,13 +42,23 @@ interface TenantDetail { id: string; slug: string; name: string; status: string;
             <a [routerLink]="['/app/sites']" [queryParams]="{ tenantId: t.id }" class="text-sm text-brand hover:underline">All →</a>
           </div>
           @if (t.sites.length === 0) {
-            <p class="text-sm text-fg-muted">No sites yet.</p>
+            <div class="rounded-md border border-white/5 p-4">
+              <p class="text-sm text-fg-muted mb-3">No sites yet.</p>
+              <div class="flex flex-wrap gap-2">
+                <a [routerLink]="['/app/studio', t.id]" class="mc-btn-secondary text-sm">Open Studio</a>
+                <a [routerLink]="['/app/onboarding', t.id]" class="mc-btn-primary text-sm">Generate site</a>
+                <a routerLink="/app/marketplace" class="mc-btn-ghost text-sm">Browse templates</a>
+              </div>
+            </div>
           } @else {
             <ul class="space-y-2">
               @for (s of t.sites; track s.id) {
                 <li class="flex items-center justify-between p-3 rounded-md border border-white/5 hover:border-white/10">
                   <a [routerLink]="['/app/sites', s.id]" class="font-medium hover:text-brand">{{ s.name }}</a>
-                  <span class="mc-chip">{{ s.status }}</span>
+                  <div class="flex items-center gap-2">
+                    <span class="mc-chip">{{ s.status }}</span>
+                    <a [routerLink]="['/app/sites', s.id]" class="mc-btn-ghost text-xs">Manage</a>
+                  </div>
                 </li>
               }
             </ul>
@@ -60,7 +73,10 @@ interface TenantDetail { id: string; slug: string; name: string; status: string;
             <a routerLink="/app/domains" class="text-sm text-brand hover:underline">Manage →</a>
           </div>
           @if (t.domains.length === 0) {
-            <p class="text-sm text-fg-muted">No domains attached.</p>
+            <div>
+              <p class="text-sm text-fg-muted mb-3">No domains attached.</p>
+              <a routerLink="/app/domains" class="mc-btn-secondary text-sm">Connect domain</a>
+            </div>
           } @else {
             <ul class="space-y-2 text-sm">
               @for (d of t.domains; track d.id) {

@@ -5,7 +5,7 @@ build
 coverage
 .next
 .nx
-prisma/migrations
+Entity Framework Core/migrations
 storage
 uploads
 *.lock

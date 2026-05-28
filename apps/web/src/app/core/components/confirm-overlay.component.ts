@@ -6,7 +6,7 @@ import { VersionCheckService } from '../services/version-check.service';
 /**
  * Single shared overlay — mounted once in the dashboard layout. Renders the
  * pending confirm dialog (if any) and the active toast (if any). Looks and
- * behaves like the existing modals in claude.page.ts: backdrop blur, mc-card
+ * behaves like the existing modals in ai.page.ts: backdrop blur, mc-card
  * body, border-t footer with Cancel + Confirm.
  */
 @Component({

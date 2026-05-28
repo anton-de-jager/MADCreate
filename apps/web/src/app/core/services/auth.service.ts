@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import type { AuthSession, AuthUser, AuthMembership, ApiResponse } from '@madcreate/shared';
@@ -42,7 +42,7 @@ export class AuthService {
   });
 
   async register(body: { email: string; password: string; firstName?: string; lastName?: string; workspaceName?: string }) {
-    const res = await firstValueFrom(this.http.post<ApiResponse<{ user: AuthUser; tokens: AuthTokens; workspace?: { id: string; slug: string; name: string } }>>(`${environment.apiBaseUrl}/auth/register`, body));
+    const res = await this.postAuth<{ user: AuthUser; tokens: AuthTokens; workspace?: { id: string; slug: string; name: string } }>('register', body);
     if (!res.ok) throw new Error(res.error.message);
     const session: StoredSession = {
       user: res.data.user,
@@ -58,7 +58,7 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const res = await firstValueFrom(this.http.post<ApiResponse<AuthSession>>(`${environment.apiBaseUrl}/auth/login`, { email, password }));
+    const res = await this.postAuth<AuthSession>('login', { email, password });
     if (!res.ok) throw new Error(res.error.message);
     const session: StoredSession = {
       user: res.data.user,
@@ -72,7 +72,7 @@ export class AuthService {
   }
 
   async logout() {
-    try { await firstValueFrom(this.http.post(`${environment.apiBaseUrl}/auth/logout`, {})); } catch { /* ignore */ }
+    try { await this.postAuth<null>('logout', {}); } catch { /* ignore */ }
     localStorage.removeItem(STORAGE_KEY);
     this._session.set(null);
     this.tenantCtx.set(null);
@@ -111,7 +111,7 @@ export class AuthService {
     const refresh = this.getRefreshToken();
     if (!refresh) return false;
     try {
-      const res = await firstValueFrom(this.http.post<ApiResponse<{ tokens: AuthTokens }>>(`${environment.apiBaseUrl}/auth/refresh`, { refreshToken: refresh }));
+      const res = await this.postAuth<{ tokens: AuthTokens }>('refresh', { refreshToken: refresh });
       if (!res.ok) return false;
       const s = this._session();
       if (!s) return false;
@@ -136,4 +136,51 @@ export class AuthService {
     this._session.set(s);
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch { /* ignore */ }
   }
+
+  private async postAuth<T>(action: string, body: unknown): Promise<ApiResponse<T>> {
+    const paths = this.authBaseCandidates().map((base) => `${base}/auth/${action}`);
+    let lastError: unknown = null;
+
+    for (const url of paths) {
+      try {
+        return await firstValueFrom(this.http.post<ApiResponse<T>>(url, body));
+      } catch (error) {
+        lastError = error;
+        if (!isMissingApiRoute(error)) throw toApiError(error);
+      }
+    }
+
+    throw toApiError(lastError);
+  }
+
+  private authBaseCandidates(): string[] {
+    const configured = stripTrailingSlash(environment.apiBaseUrl);
+    const candidates = [configured];
+    if (configured.endsWith('/v1')) {
+      const root = configured.slice(0, -3);
+      candidates.push(`${root}/api`, root);
+    } else if (configured.endsWith('/api')) {
+      const root = configured.slice(0, -4);
+      candidates.push(`${root}/v1`, root);
+    } else {
+      candidates.push(`${configured}/v1`, `${configured}/api`);
+    }
+    return [...new Set(candidates.map(stripTrailingSlash))];
+  }
+}
+
+function stripTrailingSlash(value: string): string {
+  return value.replace(/\/+$/, '');
+}
+
+function isMissingApiRoute(error: unknown): boolean {
+  return error instanceof HttpErrorResponse && (error.status === 0 || error.status === 404 || error.status === 403);
+}
+
+function toApiError(error: unknown): Error {
+  if (error instanceof HttpErrorResponse) {
+    const message = error.error?.error?.message || error.error?.message || error.message;
+    return new Error(message || `API request failed (${error.status || 'network error'})`);
+  }
+  return error instanceof Error ? error : new Error('API request failed');
 }

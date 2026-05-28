@@ -9,9 +9,9 @@
    ================================================================= */
 
 :root, .dark {
-  --brand: 192 38 211;          /* #C026D3 — primary fuchsia */
+  --brand: 0 200 83;          /* #00C853 - primary green */
   --brand-fg: 255 255 255;
-  --accent: 163 230 53;         /* #A3E635 — secondary lime */
+  --accent: 100 221 23;         /* #64DD17 - secondary lime */
   --surface: 11 11 18;          /* #0B0B12 */
   --surface-raised: 19 19 28;   /* #13131C */
   --surface-subtle: 28 28 41;   /* #1C1C29 */
@@ -24,9 +24,9 @@
 }
 
 .light {
-  --brand: 192 38 211;          /* #C026D3 */
+  --brand: 0 200 83;          /* #00C853 */
   --brand-fg: 255 255 255;
-  --accent: 163 230 53;         /* #A3E635 */
+  --accent: 100 221 23;         /* #64DD17 */
   --surface: 255 255 255;
   --surface-raised: 248 250 252;
   --surface-subtle: 241 245 249;

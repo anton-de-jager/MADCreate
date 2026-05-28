@@ -2,12 +2,12 @@
   "items": [
     {
       "title": "Implement AuditInterceptor - currently a pass-through stub",
-      "description": "File: apps/api/src/common/interceptors/audit.interceptor.ts. The interceptor is wired globally in apps/api/src/app.module.ts (APP_INTERCEPTOR) but its intercept() just returns next.handle() - no audit row is ever written, even though Prisma has an AuditLog model (prisma/schema.prisma line ~827).\n\nWhat to change:\n1. Inject PrismaService into AuditInterceptor.\n2. After next.handle().pipe(tap(...)) for any non-GET request, write an AuditLog row with: actorUserId (from req.user.sub if present), action (HTTP method + route), targetTable (best-effort from controller path), tenantId (from query/body if present), ip, userAgent.\n3. Skip GETs and health endpoints to avoid log spam.\n4. Wrap the write in try/catch so audit failures never bubble.\n\nAcceptance: hitting POST /v1/tenants creates a row in audit_logs visible via Prisma Studio. No regression on response latency (<10ms overhead).",
+      "description": "File: apps/api/src/common/interceptors/audit.interceptor.ts. The interceptor is wired globally in apps/api/src/app.module.ts (APP_INTERCEPTOR) but its intercept() just returns next.handle() - no audit row is ever written, even though Entity Framework Core has an AuditLog model (Entity Framework Core/schema.Entity Framework Core line ~827).\n\nWhat to change:\n1. Inject Entity Framework CoreService into AuditInterceptor.\n2. After next.handle().pipe(tap(...)) for any non-GET request, write an AuditLog row with: actorUserId (from req.user.sub if present), action (HTTP method + route), targetTable (best-effort from controller path), tenantId (from query/body if present), ip, userAgent.\n3. Skip GETs and health endpoints to avoid log spam.\n4. Wrap the write in try/catch so audit failures never bubble.\n\nAcceptance: hitting POST /v1/tenants creates a row in audit_logs visible via Entity Framework Core Studio. No regression on response latency (<10ms overhead).",
       "priority": 2
     },
     {
       "title": "Add /verify, /reset-password, /magic, /accept-invite Angular routes",
-      "description": "apps/api/src/modules/mail/mail.service.ts sends emails linking to ${appUrl}/verify?token=…, /reset-password?token=…, /magic?token=…, /accept-invite?token=…  - but apps/web/src/app/app.routes.ts has NO matching routes, so every link currently redirects to / via the wildcard fallback.\n\nWhat to change:\n1. Add 4 standalone pages under apps/web/src/app/features/auth/: verify-email.page.ts, reset-password.page.ts, magic-link.page.ts, accept-invite.page.ts.\n2. Each reads ?token= from ActivatedRoute, POSTs to the appropriate /v1/auth endpoint, shows success or error, then redirects to /login or /app/home.\n3. Wire all four into app.routes.ts above the dashboard block (they are public).\n4. /accept-invite should call a new POST /v1/workspaces/invites/accept endpoint (or whatever exists).\n\nAcceptance: clicking a real verification email link lands on a working page, not the landing page.",
+      "description": "apps/api/src/modules/mail/mail.service.ts sends emails linking to ${appUrl}/verify?token=â€¦, /reset-password?token=â€¦, /magic?token=â€¦, /accept-invite?token=â€¦  - but apps/web/src/app/app.routes.ts has NO matching routes, so every link currently redirects to / via the wildcard fallback.\n\nWhat to change:\n1. Add 4 standalone pages under apps/web/src/app/features/auth/: verify-email.page.ts, reset-password.page.ts, magic-link.page.ts, accept-invite.page.ts.\n2. Each reads ?token= from ActivatedRoute, POSTs to the appropriate /v1/auth endpoint, shows success or error, then redirects to /login or /app/home.\n3. Wire all four into app.routes.ts above the dashboard block (they are public).\n4. /accept-invite should call a new POST /v1/workspaces/invites/accept endpoint (or whatever exists).\n\nAcceptance: clicking a real verification email link lands on a working page, not the landing page.",
       "priority": 1
     },
     {
@@ -22,7 +22,7 @@
     },
     {
       "title": "Wire FormSubmission + Lead models to /v1 endpoints",
-      "description": "prisma/schema.prisma defines FormSubmission (line ~789) and Lead (line ~805) but no Nest module exposes either. Visitor sites render contact forms (apps/web/src/app/features/tenant-render/sections/contact.section.ts) yet there's no API to receive a submission. Tenants can't see leads.\n\nWhat to change:\n1. Create apps/api/src/modules/forms with: forms.controller.ts (POST /forms public, GET /forms tenant-scoped), forms.service.ts (creates FormSubmission and optional Lead row).\n2. Create apps/api/src/modules/leads with GET /leads and PATCH /leads/:id for the studio.\n3. Wire contact.section.ts to POST to /v1/forms with tenantId.\n4. Add a 'Leads' page in the dashboard sidebar.\n\nAcceptance: submitting the contact form on a published site creates a FormSubmission visible in the studio.",
+      "description": "Entity Framework Core/schema.Entity Framework Core defines FormSubmission (line ~789) and Lead (line ~805) but no .NET Core module exposes either. Visitor sites render contact forms (apps/web/src/app/features/tenant-render/sections/contact.section.ts) yet there's no API to receive a submission. Tenants can't see leads.\n\nWhat to change:\n1. Create apps/api/src/modules/forms with: forms.controller.ts (POST /forms public, GET /forms tenant-scoped), forms.service.ts (creates FormSubmission and optional Lead row).\n2. Create apps/api/src/modules/leads with GET /leads and PATCH /leads/:id for the studio.\n3. Wire contact.section.ts to POST to /v1/forms with tenantId.\n4. Add a 'Leads' page in the dashboard sidebar.\n\nAcceptance: submitting the contact form on a published site creates a FormSubmission visible in the studio.",
       "priority": 2
     },
     {
@@ -32,12 +32,12 @@
     },
     {
       "title": "Marketplace cards are read-only - add 'Use template' action",
-      "description": "apps/web/src/app/features/marketplace/marketplace.page.ts renders template cards but has no button to actually use one. Users can browse but not act.\n\nWhat to change:\n1. Add a 'Use template' button to each card.\n2. On click, navigate to /app/onboarding?templateId=… or POST to /v1/sites { templateSlug } against the current tenant.\n3. Add a backend endpoint POST /v1/templates/:slug/apply { tenantId } that clones the template's pages/sections into a new Site.\n\nAcceptance: clicking 'Use template' creates a new site from the template and redirects to /app/sites/:id.",
+      "description": "apps/web/src/app/features/marketplace/marketplace.page.ts renders template cards but has no button to actually use one. Users can browse but not act.\n\nWhat to change:\n1. Add a 'Use template' button to each card.\n2. On click, navigate to /app/onboarding?templateId=â€¦ or POST to /v1/sites { templateSlug } against the current tenant.\n3. Add a backend endpoint POST /v1/templates/:slug/apply { tenantId } that clones the template's pages/sections into a new Site.\n\nAcceptance: clicking 'Use template' creates a new site from the template and redirects to /app/sites/:id.",
       "priority": 3
     },
     {
       "title": "Marketing landing /demo route is broken (catches wildcard redirect)",
-      "description": "apps/web/src/app/features/marketing/landing/landing.page.ts line 134: <a routerLink=\"/demo\">. No /demo route exists in apps/web/src/app/app.routes.ts so the wildcard ** sends users back to /.\n\nWhat to change: EITHER add a /demo route that opens a real demo tenant slug (e.g. redirect to /demo-tenant) OR remove the button until a demo exists. Pick the redirect approach - seed a 'demo' tenant and redirect /demo → /demo.\n\nAcceptance: 'Open the live demo tenant' lands on a real rendered tenant, not the homepage.",
+      "description": "apps/web/src/app/features/marketing/landing/landing.page.ts line 134: <a routerLink=\"/demo\">. No /demo route exists in apps/web/src/app/app.routes.ts so the wildcard ** sends users back to /.\n\nWhat to change: EITHER add a /demo route that opens a real demo tenant slug (e.g. redirect to /demo-tenant) OR remove the button until a demo exists. Pick the redirect approach - seed a 'demo' tenant and redirect /demo â†’ /demo.\n\nAcceptance: 'Open the live demo tenant' lands on a real rendered tenant, not the homepage.",
       "priority": 2
     },
     {
@@ -47,7 +47,7 @@
     },
     {
       "title": "Add skeleton/loading states to pages that fetch on init",
-      "description": "Several pages render blank or 'Loading…' text while initial data fetches: analytics, integrations, themes, deployments, settings. The dashboard home has nice skeletons - copy that pattern.\n\nFiles: apps/web/src/app/features/{analytics,integrations,themes,deployments,settings,media,marketplace}/*.page.ts.\n\nWhat to change: add a loading() signal, set it true in ngOnInit() and false in subscribe next/error, render mc-card p-5 h-N animate-pulse blocks until loaded.\n\nAcceptance: every primary list/detail page shows skeletons until data is loaded.",
+      "description": "Several pages render blank or 'Loadingâ€¦' text while initial data fetches: analytics, integrations, themes, deployments, settings. The dashboard home has nice skeletons - copy that pattern.\n\nFiles: apps/web/src/app/features/{analytics,integrations,themes,deployments,settings,media,marketplace}/*.page.ts.\n\nWhat to change: add a loading() signal, set it true in ngOnInit() and false in subscribe next/error, render mc-card p-5 h-N animate-pulse blocks until loaded.\n\nAcceptance: every primary list/detail page shows skeletons until data is loaded.",
       "priority": 3
     },
     {
@@ -77,7 +77,7 @@
     },
     {
       "title": "Themes page only shows a 'Create default theme' button - no edit/duplicate/AI-from-brand",
-      "description": "apps/web/src/app/features/themes/themes.page.ts can only set-active or create-a-default theme. No editor for color tokens, typography, no preview, no AI generation from the tenant brand kit.\n\nWhat to change:\n1. Add an Edit button per theme card → opens a modal/page with color pickers for each token, font selectors, live preview.\n2. Add 'Duplicate' button to clone an existing theme.\n3. Add '✦ Generate from brand' that calls /v1/ai/generate with kind=PALETTE+TYPOGRAPHY using tenant.branding.\n\nAcceptance: user can edit colors via color-picker and see changes reflected in a live preview swatch.",
+      "description": "apps/web/src/app/features/themes/themes.page.ts can only set-active or create-a-default theme. No editor for color tokens, typography, no preview, no AI generation from the tenant brand kit.\n\nWhat to change:\n1. Add an Edit button per theme card â†’ opens a modal/page with color pickers for each token, font selectors, live preview.\n2. Add 'Duplicate' button to clone an existing theme.\n3. Add 'âœ¦ Generate from brand' that calls /v1/ai/generate with kind=PALETTE+TYPOGRAPHY using tenant.branding.\n\nAcceptance: user can edit colors via color-picker and see changes reflected in a live preview swatch.",
       "priority": 3
     },
     {
@@ -87,7 +87,7 @@
     },
     {
       "title": "Analytics page only shows 4 stat cards - no chart, no breakdown, no funnel",
-      "description": "apps/web/src/app/features/analytics/analytics.page.ts renders just views/conversions/AI/deploys totals. No time-series chart, no top-pages table, no referrer breakdown, no funnel - despite Prisma's AnalyticsEvent (line ~770) supporting all of this.\n\nWhat to change:\n1. Add a sparkline / area chart for views-over-time (28 days). Use a tiny chart lib (uPlot, or pure SVG) - no heavy dependency.\n2. Add Top pages table (path, views, conversion %).\n3. Add Referrers table.\n4. Backend: add GET /v1/analytics/timeseries, /v1/analytics/top-pages, /v1/analytics/referrers.\n\nAcceptance: tenant sees a 28-day views chart and top 10 pages with conversion data.",
+      "description": "apps/web/src/app/features/analytics/analytics.page.ts renders just views/conversions/AI/deploys totals. No time-series chart, no top-pages table, no referrer breakdown, no funnel - despite Entity Framework Core's AnalyticsEvent (line ~770) supporting all of this.\n\nWhat to change:\n1. Add a sparkline / area chart for views-over-time (28 days). Use a tiny chart lib (uPlot, or pure SVG) - no heavy dependency.\n2. Add Top pages table (path, views, conversion %).\n3. Add Referrers table.\n4. Backend: add GET /v1/analytics/timeseries, /v1/analytics/top-pages, /v1/analytics/referrers.\n\nAcceptance: tenant sees a 28-day views chart and top 10 pages with conversion data.",
       "priority": 3
     },
     {
@@ -107,7 +107,7 @@
     },
     {
       "title": "Pricing page CTA hits /register but doesn't pre-select the plan",
-      "description": "apps/web/src/app/features/marketing/pricing/pricing.page.ts links to /register without ?plan=. When the new user finishes onboarding, they have to figure out billing again.\n\nWhat to change:\n1. Append ?plan=<code> to /register URLs on every pricing card.\n2. RegisterPage reads ?plan= and stashes it in sessionStorage.\n3. After register → onboarding → first dashboard load, kick off Stripe checkout for the stashed plan.\n\nAcceptance: clicking 'Start free' on the Growth plan and finishing signup lands you in the dashboard with a 'Complete checkout: Growth' nudge.",
+      "description": "apps/web/src/app/features/marketing/pricing/pricing.page.ts links to /register without ?plan=. When the new user finishes onboarding, they have to figure out billing again.\n\nWhat to change:\n1. Append ?plan=<code> to /register URLs on every pricing card.\n2. RegisterPage reads ?plan= and stashes it in sessionStorage.\n3. After register â†’ onboarding â†’ first dashboard load, kick off Payfast onsite checkout for the stashed plan.\n\nAcceptance: clicking 'Start free' on the Growth plan and finishing signup lands you in the dashboard with a 'Complete checkout: Growth' nudge.",
       "priority": 4
     },
     {
@@ -131,8 +131,8 @@
       "priority": 2
     },
     {
-      "title": "API responses leak Prisma internals via thrown errors (no global exception filter)",
-      "description": "Browse apps/api/src/main.ts and modules - there's no global ExceptionFilter. Prisma errors (P2002 unique violations, P2025 not found) bubble as 500s with stack-trace clues about internal table names.\n\nWhat to change:\n1. Create apps/api/src/common/filters/prisma-exception.filter.ts that maps P2002→409 Conflict, P2025→404 Not Found, P2003→400 Bad Request, with generic friendly messages.\n2. Create http-exception.filter.ts that normalizes shape: { statusCode, message, error, requestId }.\n3. Register both via APP_FILTER in app.module.ts.\n4. Hide stack traces in NODE_ENV=production.\n\nAcceptance: registering a duplicate email returns 409 { message: 'Email already in use' } not 500 with Prisma trace.",
+      "title": "API responses leak Entity Framework Core internals via thrown errors (no global exception filter)",
+      "description": "Browse apps/api/src/main.ts and modules - there's no global ExceptionFilter. Entity Framework Core errors (P2002 unique violations, P2025 not found) bubble as 500s with stack-trace clues about internal table names.\n\nWhat to change:\n1. Create apps/api/src/common/filters/Entity Framework Core-exception.filter.ts that maps P2002â†’409 Conflict, P2025â†’404 Not Found, P2003â†’400 Bad Request, with generic friendly messages.\n2. Create http-exception.filter.ts that normalizes shape: { statusCode, message, error, requestId }.\n3. Register both via APP_FILTER in app.module.ts.\n4. Hide stack traces in NODE_ENV=production.\n\nAcceptance: registering a duplicate email returns 409 { message: 'Email already in use' } not 500 with Entity Framework Core trace.",
       "priority": 1
     },
     {
@@ -147,12 +147,12 @@
     },
     {
       "title": "AiService.run() rethrows after marking generation FAILED - caller and BullMQ both log it",
-      "description": "apps/api/src/modules/ai/ai.service.ts lines 192-203: on error, the row is updated to FAILED and then `throw err` is re-raised. BullMQ then retries the job per its default retry policy, generating duplicate FAILED states and noisy logs.\n\nWhat to change:\n1. Decide: should AI failures retry? If yes, don't write FAILED on first failure - write a 'retry attempt' counter and only FAILED after maxRetries.\n2. If no, configure the BullMQ processor (search for QUEUE_AI processor) to set attempts: 1 and remove rethrow OR keep rethrow but ensure jobs don't retry.\n3. Logger.error is fine; the rethrow is the issue.\n\nAcceptance: a failing generation produces exactly one FAILED row and one error log line, not 3 retries × 2 lines.",
+      "description": "apps/api/src/modules/ai/ai.service.ts lines 192-203: on error, the row is updated to FAILED and then `throw err` is re-raised. BullMQ then retries the job per its default retry policy, generating duplicate FAILED states and noisy logs.\n\nWhat to change:\n1. Decide: should AI failures retry? If yes, don't write FAILED on first failure - write a 'retry attempt' counter and only FAILED after maxRetries.\n2. If no, configure the BullMQ processor (search for QUEUE_AI processor) to set attempts: 1 and remove rethrow OR keep rethrow but ensure jobs don't retry.\n3. Logger.error is fine; the rethrow is the issue.\n\nAcceptance: a failing generation produces exactly one FAILED row and one error log line, not 3 retries Ã— 2 lines.",
       "priority": 3
     },
     {
-      "title": "Shared types in @madcreate/shared diverge from Prisma schema in subtle ways",
-      "description": "packages/shared/src/types/ai.ts and packages/shared/src/types/onboarding.ts (both modified per git status) are manually maintained. Diff vs prisma/schema.prisma AIGeneration / Tenant.onboarding shape will drift.\n\nWhat to change:\n1. Add a script scripts/check-shared-types.ts that imports Prisma types and asserts the shape matches the @madcreate/shared exports.\n2. Run it in CI (add to package.json scripts and a GitHub Action).\n3. Where Prisma is source of truth (enums like AIGenerationStatus), re-export from @prisma/client through @madcreate/shared instead of redeclaring.\n\nAcceptance: CI fails if someone adds a Prisma enum value but forgets the shared type update.",
+      "title": "Shared types in @madcreate/shared diverge from Entity Framework Core schema in subtle ways",
+      "description": "packages/shared/src/types/ai.ts and packages/shared/src/types/onboarding.ts (both modified per git status) are manually maintained. Diff vs Entity Framework Core/schema.Entity Framework Core AIGeneration / Tenant.onboarding shape will drift.\n\nWhat to change:\n1. Add a script scripts/check-shared-types.ts that imports Entity Framework Core types and asserts the shape matches the @madcreate/shared exports.\n2. Run it in CI (add to package.json scripts and a GitHub Action).\n3. Where Entity Framework Core is source of truth (enums like AIGenerationStatus), re-export from @Entity Framework Core/client through @madcreate/shared instead of redeclaring.\n\nAcceptance: CI fails if someone adds a Entity Framework Core enum value but forgets the shared type update.",
       "priority": 3
     }
   ]

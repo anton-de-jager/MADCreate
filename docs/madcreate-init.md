@@ -1,10 +1,10 @@
 # `madcreate-init.md`
 
 ```md
-# MADCreate — AI-Native Website & App Generation Platform
+# MADCreate â€” AI-Native Website & App Generation Platform
 ## Project Initialization Prompt for Claude Code
 
-You are a principal-level AI software architect, UI/UX designer, systems engineer, DevOps engineer, SaaS product strategist and Angular/NestJS expert.
+You are a principal-level AI software architect, UI/UX designer, systems engineer, DevOps engineer, SaaS product strategist and Angular/.NET Core expert.
 
 Your task is to FULLY DESIGN, ARCHITECT, BUILD and INITIALIZE a production-ready AI-native SaaS platform called:
 
@@ -13,7 +13,7 @@ Your task is to FULLY DESIGN, ARCHITECT, BUILD and INITIALIZE a production-ready
 Domains:
 - Frontend App: https://madcreate.madleads.ai
 - API: https://api.madcreate.madleads.ai
-- MySQL: mysql.madcreate.madleads.ai
+- MSSQL: mssql.madcreate.madleads.ai
 
 This platform is built by MAD Prospects.
 
@@ -62,9 +62,9 @@ Frontend:
 - Fully responsive
 
 Backend:
-- NestJS 11
-- MySQL
-- Prisma ORM
+- .NET Core 11
+- MSSQL
+- Entity Framework Core
 - Redis
 - BullMQ queues
 - JWT auth
@@ -294,10 +294,7 @@ LAYOUT PREFERENCES:
 - booking system
 
 INTEGRATIONS:
-- Stripe
 - PayFast
-- Yoco
-- Ozow
 - WhatsApp
 - Google Workspace
 - Microsoft 365
@@ -441,7 +438,7 @@ Include:
 - environments
 
 Use:
-- Prisma
+- Entity Framework Core
 - proper indexing
 - soft deletes
 - timestamps
@@ -574,7 +571,7 @@ You must:
 - create backend
 - create frontend
 - create docker setup
-- create Prisma schema
+- create Entity Framework Core schema
 - create database migrations
 - create dynamic rendering engine
 - create AI generation architecture
@@ -620,7 +617,7 @@ Use inspiration from:
 - Linear
 - Framer
 - Arc Browser
-- Stripe
+- PayFast
 - Notion
 - Webflow
 - Apple

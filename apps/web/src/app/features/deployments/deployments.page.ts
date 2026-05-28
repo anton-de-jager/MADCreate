@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, inject, signal, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { TenantContextService } from '../../core/services/tenant-context.service';
@@ -13,7 +14,7 @@ const TARGETS = ['INTERNAL', 'STATIC_EXPORT', 'FTP', 'SFTP', 'CLOUDFLARE_PAGES',
 @Component({
   selector: 'mc-deployments',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
   <div class="mb-8 flex items-center justify-between">
@@ -30,7 +31,10 @@ const TARGETS = ['INTERNAL', 'STATIC_EXPORT', 'FTP', 'SFTP', 'CLOUDFLARE_PAGES',
   </div>
 
   @if (!tenant()) {
-    <div class="mc-card p-8 text-center text-fg-muted">Pick a tenant first.</div>
+    <div class="mc-card p-8 text-center">
+      <p class="text-fg-muted mb-3">Pick a tenant first.</p>
+      <a routerLink="/app/tenants" class="mc-btn-primary">Go to tenants</a>
+    </div>
   } @else if (loading()) {
     <!-- Skeleton rows mirror the deployment list. Only shown on the first
          fetch - subsequent SSE-triggered refreshes re-use the existing items. -->
@@ -49,7 +53,14 @@ const TARGETS = ['INTERNAL', 'STATIC_EXPORT', 'FTP', 'SFTP', 'CLOUDFLARE_PAGES',
       }
     </div>
   } @else if (items().length === 0) {
-    <div class="mc-card p-8 text-center text-fg-muted">No deployments yet.</div>
+    <div class="mc-card p-8 text-center">
+      <p class="text-fg-muted mb-3">No deployments yet.</p>
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <button class="mc-btn-primary" (click)="trigger()"><i class="fa-solid fa-arrow-up"></i> Deploy now</button>
+        <a routerLink="/app/domains" class="mc-btn-secondary">Connect domain</a>
+        <a routerLink="/app/sites" class="mc-btn-ghost">Review site</a>
+      </div>
+    </div>
   } @else {
     <div class="space-y-3">
       @for (d of items(); track d.id) {

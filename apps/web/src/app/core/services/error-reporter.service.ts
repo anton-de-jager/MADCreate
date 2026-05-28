@@ -3,7 +3,7 @@ import { environment } from '@env/environment';
 
 /**
  * Global error handler that captures unhandled errors AND explicit
- * console.error() calls, then logs them as claude-tasks via the
+ * console.error() calls, then logs them as MADCloud tasks via the
  * import-bulk endpoint (which deduplicates against active tasks).
  *
  * Client-side Set prevents the same error from being reported twice
@@ -72,7 +72,7 @@ export class ErrorReporterHandler implements ErrorHandler {
         headers['X-Worker-Token'] = environment.errorReporterToken;
       }
     }
-    fetch(`${environment.apiBaseUrl}/claude-tasks/import-bulk`, {
+    fetch(`${environment.apiBaseUrl}/ai-tasks/import-bulk`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ items, source: 'error-reporter' }),

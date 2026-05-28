@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -51,7 +51,7 @@ interface Member {
     </div>
 
     <!-- Security: change password -->
-    <div class="mc-card p-6 md:col-span-2">
+    <div id="billing" class="mc-card p-6 md:col-span-2">
       <h2 class="mc-heading text-lg font-semibold mb-1">Security</h2>
       <p class="text-xs text-fg-muted mb-4">Change your password. All other sessions are signed out automatically.</p>
       <form [formGroup]="pwForm" (ngSubmit)="changePassword()" class="grid md:grid-cols-3 gap-3">
@@ -209,6 +209,7 @@ export class SettingsPage implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly notify = inject(NotificationService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   protected readonly theme = inject(ThemeService);
 
   // Profile
@@ -261,6 +262,9 @@ export class SettingsPage implements OnInit {
     });
     this.loadMembers();
     this.loadSubscription();
+    if (this.route.snapshot.queryParamMap.get('tab') === 'billing') {
+      setTimeout(() => document.getElementById('billing')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+    }
   }
 
   save() {
@@ -327,7 +331,7 @@ export class SettingsPage implements OnInit {
         if (res.portalUrl) {
           window.location.href = res.portalUrl;
         } else {
-          this.billingError.set('Billing portal is not available. Stripe may not be configured.');
+          this.billingError.set('Billing portal is not available. Payfast merchant settings may not be configured.');
         }
       },
       error: (e: Error) => { this.billingError.set(e.message); this.portalBusy.set(false); },

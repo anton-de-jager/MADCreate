@@ -6,7 +6,7 @@
 ```
 madcreate.madprospects.com     -> frontend + dynamic site rendering
 madcreateapi.madprospects.com  -> API
-mysql.madcreate.madleads.ai      -> MySQL
+mssql.madcreate.madleads.ai      -> MSSQL
 ```
 
 ---
@@ -16,11 +16,11 @@ mysql.madcreate.madleads.ai      -> MySQL
 ```
 madcreate/
 ├── apps/
-│   ├── api/         NestJS 11 backend (REST + BullMQ workers)
+│   ├── api/         .NET Core 11 backend (REST + BullMQ workers)
 │   └── web/         Angular 19 frontend (standalone, signals, Tailwind, Material)
 ├── packages/
 │   └── shared/      Cross-app TypeScript types & DTOs
-├── database/       Prisma schema, seed, SQL init assets
+├── database/       Entity Framework Core schema, seed, SQL init assets
 ├── deploy/         Deploy scripts, Dockerfiles, nginx/Apache config
 │   └── docker-compose.yml
 ├── .env.example
@@ -32,12 +32,12 @@ madcreate/
 | Layer        | Choice                                                  |
 | ------------ | ------------------------------------------------------- |
 | Frontend     | Angular 22 (standalone, signals), Tailwind 3, Angular Material |
-| Backend      | NestJS 11, Prisma 5, MySQL 8, Redis 7, BullMQ           |
+| Backend      | .NET Core 11, Entity Framework Core 5, MSSQL 8, Redis 7, BullMQ           |
 | AI           | OpenAI (with mock fallback), provider-pluggable         |
 | Auth         | JWT + refresh tokens (argon2 hashes)                    |
 | Queues       | BullMQ (AI gen, deployments, email, domain verification) |
 | Storage      | Local disk (S3 wired but not yet implemented)           |
-| Hosting      | Docker Compose (mysql, redis, api, web, nginx)          |
+| Hosting      | Docker Compose (mssql, redis, api, web, nginx)          |
 | Reverse proxy | nginx with wildcard catch-all for tenant custom domains |
 | Observability | pino structured logs                                    |
 
@@ -57,16 +57,16 @@ madcreate/
 # 1. Copy env
 cp .env.example .env
 
-# 2. Bring up MySQL + Redis
-pnpm run docker:up -- mysql redis
+# 2. Bring up MSSQL + Redis
+pnpm run docker:up -- mssql redis
 
 # 3. Install workspaces
 pnpm install
 
-# 4. Generate Prisma client, migrate, seed
-pnpm run prisma:generate
-pnpm run prisma:migrate
-pnpm run prisma:seed
+# 4. Generate Entity Framework Core client, migrate, seed
+pnpm run Entity Framework Core:generate
+pnpm run Entity Framework Core:migrate
+pnpm run Entity Framework Core:seed
 
 # 5. Start both apps (api on :4213, web on :3013)
 pnpm run dev
@@ -84,7 +84,7 @@ Open:
 pnpm run docker:up
 ```
 
-Brings up mysql, redis, api, web and an nginx ingress in front of everything.
+Brings up mssql, redis, api, web and an nginx ingress in front of everything.
 
 ---
 
@@ -94,7 +94,7 @@ All variables documented in [`.env.example`](.env.example). Key ones:
 
 | Var                    | What it controls                                        |
 | ---------------------- | ------------------------------------------------------- |
-| `DATABASE_URL`         | MySQL connection                                        |
+| `DATABASE_URL`         | MSSQL connection                                        |
 | `REDIS_URL`            | Redis connection (queues + caching)                     |
 | `JWT_SECRET` / `JWT_REFRESH_SECRET` | Token signing                              |
 | `OPENAI_API_KEY`       | If unset, the mock AI provider is used                  |
@@ -181,14 +181,14 @@ The Studio page (`/app/studio/:tenantId`) drives this end to end.
 ## What's deep vs. what's stubbed (be honest)
 
 **Deep / production-grade (everything):**
-- Prisma schema (28 models, indexes, soft deletes, audit shape, multi-tenant tenantId on everything)
+- Entity Framework Core schema (28 models, indexes, soft deletes, audit shape, multi-tenant tenantId on everything)
 - Auth (register, login, refresh rotation, password reset, email verification, magic links)
 - Tenant + workspace + RBAC model
 - AI generation pipeline (provider abstraction, queued jobs, prompt registry, token/cost tracking, mock fallback)
 - Render engine (hostname & slug-based, theme token injection, SEO/sitemap/robots)
 - Domain verification flow (DNS TXT check) + **Cloudflare auto-CNAME/TXT + Universal SSL** when CF token configured
 - Deployment processor + **9 real adapters** (internal, static-export, ftp, sftp, webhook, cloudflare-pages, vercel, digitalocean, docker)
-- **Stripe billing**: checkout sessions + webhook handler that syncs subscription state
+- **Payfast billing**: onsite checkout UUID creation + notification handler for subscriptions
 - **SMTP email** via nodemailer (verify / reset / magic-link / workspace invite), graceful no-op when SMTP not set
 - **S3 storage driver** (`@aws-sdk/client-s3`) alongside local disk — switches via `STORAGE_DRIVER`
 - **Template instantiation**: clone a template's full site schema into a new Site + Pages for a tenant
@@ -197,7 +197,7 @@ The Studio page (`/app/studio/:tenantId`) drives this end to end.
 
 **Still wisely stubbed:**
 - Angular SSR — the renderer is server-fetched JSON but client-rendered. SEO works (sitemap/robots are generated server-side, meta tags injected client-side). Full SSR is a one-day add via `@angular/ssr`; not done because it materially changes the build/serve loop and offers diminishing returns vs. CDN caching for tenant sites.
-- Most third-party integrations in the catalog (Stripe is real; the rest are entries in the registry with config schemas, ready for per-provider SDK calls).
+- Most third-party integrations in the catalog are registry entries; Payfast is the single real payment provider.
 
 These systems each have a real seat at the table.
 
@@ -213,12 +213,12 @@ pnpm run lint           # lint api + web
 pnpm run test           # test api + web
 pnpm run format         # prettier write
 
-# Prisma
-pnpm run prisma:generate
-pnpm run prisma:migrate
-pnpm run prisma:deploy
-pnpm run prisma:studio
-pnpm run prisma:seed
+# Entity Framework Core
+pnpm run Entity Framework Core:generate
+pnpm run Entity Framework Core:migrate
+pnpm run Entity Framework Core:deploy
+pnpm run Entity Framework Core:studio
+pnpm run Entity Framework Core:seed
 
 # Docker
 pnpm run docker:up
@@ -236,7 +236,7 @@ apps/api/src/
 ├── main.ts
 ├── app.module.ts
 ├── config/configuration.ts
-├── database/prisma/
+├── database/Entity Framework Core/
 ├── redis/
 ├── queue/                BullMQ wiring
 ├── common/               guards, decorators, middleware, filters, interceptors
@@ -259,7 +259,7 @@ apps/api/src/
     ├── render/           tenant site rendering (JSON + robots/sitemap)
     ├── admin/            super-admin overview
     ├── health/           liveness + readiness
-    ├── billing/          plans + subscription shape (Stripe stub)
+    ├── billing/          plans + Payfast subscription handoff
     └── onboarding/       wizard answers + AI generate-from-answers
 ```
 

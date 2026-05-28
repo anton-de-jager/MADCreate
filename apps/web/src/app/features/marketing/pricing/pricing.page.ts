@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { MarketingHeader } from '../shared/marketing-header.component';
 import { MarketingFooter } from '../shared/marketing-footer.component';
 import { ApiService } from '../../../core/services/api.service';
+import { PayfastSubscribeComponent } from '../../../shared/payfast/payfast-subscribe.component';
 
 interface Plan {
   id: string; code: string; name: string; description?: string;
@@ -15,7 +16,7 @@ interface Plan {
 @Component({
   selector: 'mc-pricing',
   standalone: true,
-  imports: [CommonModule, RouterLink, MarketingHeader, MarketingFooter],
+  imports: [CommonModule, RouterLink, MarketingHeader, MarketingFooter, PayfastSubscribeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
   <mc-marketing-header />
@@ -63,6 +64,9 @@ interface Plan {
         }
       </div>
     }
+  </section>
+  <section class="max-w-6xl mx-auto px-6 pb-16">
+    <app-payfast-subscribe productName="MADCreate" headline="Subscribe without leaving MADCreate" lead="Pick a plan and open the secure onsite Payfast checkout modal from this page." [compact]="true"></app-payfast-subscribe>
   </section>
   <mc-marketing-footer />
   `,

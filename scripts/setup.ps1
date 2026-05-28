@@ -6,20 +6,20 @@
   Stands up the four layers from scratch on a fresh box:
     1. Env    - copies .env.example -> .env on first run, fills missing JWT
                 secrets with 64-char random strings.
-    2. Infra  - `docker compose -f deploy/docker-compose.yml up -d mysql redis`
+    2. Infra  - `docker compose -f deploy/docker-compose.yml up -d mssql redis`
                 (default). With -NoDocker,
-                trusts an existing local MySQL + Redis pointed at by .env.
+                trusts an existing local MSSQL + Redis pointed at by .env.
     3. Code   - `pnpm install` at the monorepo root (workspaces pull in
                 apps/api, apps/web, packages/shared).
-    4. Schema - prisma generate -> prisma db push -> prisma seed.
+    4. Schema - Entity Framework Core generate -> Entity Framework Core db push -> Entity Framework Core seed.
 
   Safe to re-run. Existing .env values are preserved.
 
 .PARAMETER Reset
   Destroy docker volumes (or drop the local DB with -NoDocker) before setup.
 .PARAMETER NoDocker
-  Skip docker compose; trust local MySQL + Redis from .env.
-.PARAMETER SkipInfra / SkipInstall / SkipPrisma / SkipSeed
+  Skip docker compose; trust local MSSQL + Redis from .env.
+.PARAMETER SkipInfra / SkipInstall / SkipEntity Framework Core / SkipSeed
   Opt-out of individual phases.
 .PARAMETER StartServers
   Launch `pnpm run dev` in a new PowerShell window after setup.
@@ -40,7 +40,7 @@ param(
   [switch]$NoDocker,
   [switch]$SkipInfra,
   [switch]$SkipInstall,
-  [switch]$SkipPrisma,
+  [switch]$SkipEntity Framework Core,
   [switch]$SkipSeed,
   [switch]$StartServers,
   [switch]$Yes,
@@ -109,7 +109,7 @@ if ([int]$nodeMajor -lt 20) { Die "Node $nodeMajor detected; package.json requir
 if (-not $NoDocker -and -not $SkipInfra) {
   $docker = Get-Command docker -ErrorAction SilentlyContinue
   if (-not $docker) {
-    Warn "docker not on PATH. Re-run with -NoDocker if you intend to use a local MySQL + Redis, or install Docker Desktop."
+    Warn "docker not on PATH. Re-run with -NoDocker if you intend to use a local MSSQL + Redis, or install Docker Desktop."
     Die "Refusing to continue without docker (or -NoDocker)."
   }
   Info ("docker -> " + $docker.Source)
@@ -155,31 +155,31 @@ Info ".env is up to date."
 
 $envLines = Get-Content $envPath
 $databaseUrl  = Get-EnvValue $envLines "DATABASE_URL"
-$mysqlRootPwd = Get-EnvValue $envLines "MYSQL_ROOT_PASSWORD"
-$mysqlDb      = (Get-EnvValue $envLines "MYSQL_DATABASE") ; if (-not $mysqlDb) { $mysqlDb = "madcreate" }
-$mysqlUser    = (Get-EnvValue $envLines "MYSQL_USER")     ; if (-not $mysqlUser) { $mysqlUser = "madcreate" }
+$mssqlRootPwd = Get-EnvValue $envLines "MSSQL_ROOT_PASSWORD"
+$mssqlDb      = (Get-EnvValue $envLines "MSSQL_DATABASE") ; if (-not $mssqlDb) { $mssqlDb = "madcreate" }
+$mssqlUser    = (Get-EnvValue $envLines "MSSQL_USER")     ; if (-not $mssqlUser) { $mssqlUser = "madcreate" }
 
 # ---------------------------------------------------------------------------
-# 2. Infrastructure (MySQL + Redis)
+# 2. Infrastructure (MSSQL + Redis)
 # ---------------------------------------------------------------------------
 if (-not $SkipInfra) {
   if ($NoDocker) {
-    Step "Infrastructure - using local MySQL + Redis (-NoDocker)"
+    Step "Infrastructure - using local MSSQL + Redis (-NoDocker)"
     Info "Trusting DATABASE_URL + REDIS_URL from .env."
     if ($Reset) {
-      Confirm-Or-Exit "Drop and recreate the '$mysqlDb' database via root? Destroys all local MADCreate data."
-      $mysql = Get-Command mysql -ErrorAction SilentlyContinue
-      if (-not $mysql) { Die "mysql client not on PATH - cannot reset without docker. Add MySQL bin to PATH or omit -Reset." }
+      Confirm-Or-Exit "Drop and recreate the '$mssqlDb' database via root? Destroys all local MADCreate data."
+      $mssql = Get-Command mssql -ErrorAction SilentlyContinue
+      if (-not $mssql) { Die "mssql client not on PATH - cannot reset without docker. Add MSSQL bin to PATH or omit -Reset." }
       $bt = [char]96
-      $sql = "DROP DATABASE IF EXISTS ${bt}${mysqlDb}${bt}; CREATE DATABASE ${bt}${mysqlDb}${bt} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-      $mysqlArgs = @("-h", "localhost", "-u", "root")
-      if ($mysqlRootPwd) { $mysqlArgs += "-p$mysqlRootPwd" }
-      $sql | & mysql @mysqlArgs
-      if ($LASTEXITCODE -ne 0) { Die "mysql reset failed (exit $LASTEXITCODE). Check MYSQL_ROOT_PASSWORD." }
-      Ok "Database '$mysqlDb' reset."
+      $sql = "DROP DATABASE IF EXISTS ${bt}${mssqlDb}${bt}; CREATE DATABASE ${bt}${mssqlDb}${bt} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+      $mssqlArgs = @("-h", "localhost", "-u", "root")
+      if ($mssqlRootPwd) { $mssqlArgs += "-p$mssqlRootPwd" }
+      $sql | & mssql @mssqlArgs
+      if ($LASTEXITCODE -ne 0) { Die "mssql reset failed (exit $LASTEXITCODE). Check MSSQL_ROOT_PASSWORD." }
+      Ok "Database '$mssqlDb' reset."
     }
   } else {
-    Step "Infrastructure - docker compose (mysql + redis)"
+    Step "Infrastructure - docker compose (mssql + redis)"
     if ($Reset) {
       Confirm-Or-Exit "Tear down the madcreate docker stack AND DELETE its data volumes. Continue?"
       Info "docker compose -f deploy/docker-compose.yml down -v"
@@ -191,20 +191,20 @@ if (-not $SkipInfra) {
     }
     Push-Location $root
     try {
-      Info "docker compose -f deploy/docker-compose.yml up -d mysql redis"
-      & docker compose -f deploy/docker-compose.yml up -d mysql redis
+      Info "docker compose -f deploy/docker-compose.yml up -d mssql redis"
+      & docker compose -f deploy/docker-compose.yml up -d mssql redis
       if ($LASTEXITCODE -ne 0) { Die "docker compose up failed." }
     } finally { Pop-Location }
 
-    Info "Waiting for MySQL to report healthy (up to 60s)..."
+    Info "Waiting for MSSQL to report healthy (up to 60s)..."
     $deadline = (Get-Date).AddSeconds(60)
     $status = $null
     while ((Get-Date) -lt $deadline) {
-      $status = & docker inspect --format '{{.State.Health.Status}}' madcreate-mysql 2>$null
-      if ($status -eq "healthy") { Ok "MySQL is healthy."; break }
+      $status = & docker inspect --format '{{.State.Health.Status}}' madcreate-mssql 2>$null
+      if ($status -eq "healthy") { Ok "MSSQL is healthy."; break }
       Start-Sleep -Seconds 2
     }
-    if ($status -ne "healthy") { Warn "MySQL did not report healthy within 60s - continuing anyway, prisma may retry." }
+    if ($status -ne "healthy") { Warn "MSSQL did not report healthy within 60s - continuing anyway, Entity Framework Core may retry." }
   }
 }
 
@@ -222,28 +222,28 @@ if (-not $SkipInstall) {
 }
 
 # ---------------------------------------------------------------------------
-# 4. Prisma - generate client, push schema, seed.
+# 4. Entity Framework Core - generate client, push schema, seed.
 # ---------------------------------------------------------------------------
-if (-not $SkipPrisma) {
-  Step "Prisma - generate + push schema"
+if (-not $SkipEntity Framework Core) {
+  Step "Entity Framework Core - generate + push schema"
   Push-Location $root
   try {
-    Info "prisma generate"
-    & pnpm run prisma:generate
-    if ($LASTEXITCODE -ne 0) { Die "prisma generate failed." }
+    Info "Entity Framework Core generate"
+    & pnpm run Entity Framework Core:generate
+    if ($LASTEXITCODE -ne 0) { Die "Entity Framework Core generate failed." }
 
-    Info "prisma db push (sync schema -> database)"
-    & pnpm run prisma:push -- --accept-data-loss
-    if ($LASTEXITCODE -ne 0) { Die "prisma db push failed. Check DATABASE_URL in .env." }
+    Info "Entity Framework Core db push (sync schema -> database)"
+    & pnpm run Entity Framework Core:push -- --accept-data-loss
+    if ($LASTEXITCODE -ne 0) { Die "Entity Framework Core db push failed. Check DATABASE_URL in .env." }
     Ok "Schema in sync."
   } finally { Pop-Location }
 
   if (-not $SkipSeed) {
-    Step "Prisma - seed"
+    Step "Entity Framework Core - seed"
     Push-Location $root
     try {
-      & pnpm run prisma:seed
-      if ($LASTEXITCODE -ne 0) { Die "prisma seed failed." }
+      & pnpm run Entity Framework Core:seed
+      if ($LASTEXITCODE -ne 0) { Die "Entity Framework Core seed failed." }
       Ok "Seed applied (super admin + plans + AI prompts + demo workspace)."
     } finally { Pop-Location }
   } else { Info "Skipping seed (-SkipSeed)." }
@@ -262,8 +262,8 @@ Write-Host "  Run the app:" -ForegroundColor White
 Write-Host "    pnpm run dev           # api on :4213/v1, web on :3013" -ForegroundColor Gray
 Write-Host ""
 Write-Host "  Other handy commands:" -ForegroundColor White
-Write-Host "    pnpm run prisma:studio # browse the database in the browser" -ForegroundColor Gray
-Write-Host "    pnpm run docker:logs   # tail mysql + redis logs" -ForegroundColor Gray
+Write-Host "    pnpm run Entity Framework Core:studio # browse the database in the browser" -ForegroundColor Gray
+Write-Host "    pnpm run docker:logs   # tail mssql + redis logs" -ForegroundColor Gray
 Write-Host "    pnpm run docker:down   # stop the stack (keeps data)" -ForegroundColor Gray
 
 if ($StartServers) {

@@ -2,27 +2,22 @@
 # For multi-host / k8s, treat this as a reference topology.
 
 services:
-  mysql:
-    image: mysql:8.4
-    container_name: madcreate-mysql
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: madcreate-mssql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme_root}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-madcreate}
-      MYSQL_USER: ${MYSQL_USER:-madcreate}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-madcreate}
-    command:
-      - --default-authentication-plugin=caching_sha2_password
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --max-connections=500
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-P@szw0rdMP!Local}
+      MSSQL_DATABASE: ${MSSQL_DATABASE:-madcreate}
+      MSSQL_USER: ${MSSQL_USER:-madcreate}
+      MSSQL_PASSWORD: ${MSSQL_PASSWORD:-madcreate}
     ports:
-      - "3306:3306"
+      - "1433:1433"
     volumes:
-      - mysql-data:/var/lib/mysql
-      - ../database/mysql/init:/docker-entrypoint-initdb.d:ro
+      - mssql-data:/var/opt/mssql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-changeme_root}"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\""]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -53,14 +48,14 @@ services:
     container_name: madcreate-api
     restart: unless-stopped
     depends_on:
-      mysql:
+      mssql:
         condition: service_healthy
       redis:
         condition: service_healthy
     env_file:
       - ../.env
     environment:
-      DATABASE_URL: mysql://${MYSQL_USER:-madcreate}:${MYSQL_PASSWORD:-madcreate}@mysql:3306/${MYSQL_DATABASE:-madcreate}
+      DATABASE_URL: sqlserver://mssql:1433;database=${MSSQL_DATABASE:-madcreate};user=${MSSQL_USER:-madcreate};password=${MSSQL_PASSWORD:-madcreate};trustServerCertificate=true
       REDIS_URL: redis://redis:6379
       API_HOST: 0.0.0.0
       API_PORT: 4213
@@ -104,7 +99,7 @@ services:
       - madcreate-net
 
 volumes:
-  mysql-data:
+  mssql-data:
   redis-data:
 
 networks:

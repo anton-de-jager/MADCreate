@@ -75,7 +75,7 @@ type Phase = 'idle' | 'queuing' | 'building' | 'done' | 'error';
         <a routerLink="/app/tenants" class="text-sm text-brand hover:underline mt-1 inline-block">← Back to tenants</a>
       } @else {
         <h1 class="mc-heading text-3xl font-bold mt-1">Generate your first system.</h1>
-        <p class="text-fg-muted mt-1">Answer a few questions. We'll hand you a Claude Code prompt, you'll paste the JSON back, and the platform builds the site.</p>
+        <p class="text-fg-muted mt-1">Answer a few questions. MADCloud handles generation, returns approved JSON, and the platform builds the site.</p>
       }
     </div>
 
@@ -318,7 +318,7 @@ type Phase = 'idle' | 'queuing' | 'building' | 'done' | 'error';
                 <div class="flex items-center gap-3">
                   <input type="text"
                          class="mc-input !py-2 flex-1 text-sm"
-                         placeholder="Search integrations (e.g. 'stripe', 'crm', 'shipping')…"
+                         placeholder="Search integrations (e.g. 'payfast', 'crm', 'shipping')…"
                          [value]="integrationFilter()"
                          (input)="setIntegrationFilter($any($event.target).value)" />
                   <button type="button" class="mc-btn-secondary !px-3 !py-1.5 text-xs whitespace-nowrap"
@@ -797,7 +797,7 @@ export class OnboardingPage implements OnInit, OnDestroy {
     const v = this.form.getRawValue();
     this.ciGenerating.set(true);
     this.ciTaskStatus.set(null);
-    this.api.post<{ id: number }>('/claude-tasks', {
+    this.api.post<{ id: number }>('/ai-tasks', {
       title: `Corporate Identity for ${v.companyName || 'tenant'}`,
       description: [
         `Generate a complete corporate identity package for:`,
@@ -823,7 +823,7 @@ export class OnboardingPage implements OnInit, OnDestroy {
 
   private pollCiTask(id: number) {
     const tick = () => {
-      this.api.get<{ id: number; status: string; notes?: string | null }>(`/claude-tasks/${id}`).subscribe({
+      this.api.get<{ id: number; status: string; notes?: string | null }>(`/ai-tasks/${id}`).subscribe({
         next: (t) => {
           this.ciTaskStatus.set(t.status);
           if (t.status === 'COMPLETED' && t.notes) {
@@ -915,7 +915,7 @@ export class OnboardingPage implements OnInit, OnDestroy {
         this.api.post('/onboarding', answers, { tenantId: tenant.id }).subscribe({ next: () => resolve(), error: reject });
       });
 
-      // 3. Enqueue the generation — this also drops a /claude task that the
+      // 3. Enqueue the generation — this also drops a /ai task that the
       //    autonomous worker picks up. The end-user never sees the prompt.
       const gen = await new Promise<{ id: string }>((resolve, reject) => {
         this.api.post<{ id: string }>('/onboarding/generate', null, { tenantId: tenant.id }).subscribe({ next: resolve, error: reject });
@@ -961,7 +961,7 @@ export class OnboardingPage implements OnInit, OnDestroy {
             } else if (g.status === 'FAILED') {
               reject(new Error(g.error ?? 'Site generation failed'));
             } else if (attempts >= maxAttempts) {
-              reject(new Error('Site generation is taking longer than expected. Open /app/claude to check the worker queue.'));
+              reject(new Error('Site generation is taking longer than expected. Open /app/ai to check the worker queue.'));
             } else {
               setTimeout(tick, 4000);
             }

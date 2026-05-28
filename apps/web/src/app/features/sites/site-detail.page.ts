@@ -21,7 +21,14 @@ interface Site { id: string; name: string; status: string; tenantId: string; pag
         <h1 class="mc-heading text-3xl font-bold mt-1">{{ s.name }}</h1>
         <p class="text-fg-muted mt-1">{{ s.status }} · {{ s.pages.length }} pages</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <a [routerLink]="['/app/studio', s.tenantId]" class="mc-btn-ghost"><i class="fa-solid fa-wand-magic-sparkles"></i> Studio</a>
+        @if (firstPageId(s); as pageId) {
+          <a [routerLink]="['/app/builder', pageId]" class="mc-btn-ghost"><i class="fa-solid fa-pen-ruler"></i> Builder</a>
+        }
+        <a routerLink="/app/domains" class="mc-btn-ghost"><i class="fa-solid fa-link"></i> Domains</a>
+        <a routerLink="/app/deployments" class="mc-btn-ghost"><i class="fa-solid fa-rocket"></i> Deploy</a>
+        <a routerLink="/app/analytics" class="mc-btn-ghost"><i class="fa-solid fa-chart-line"></i> Analytics</a>
         <button class="mc-btn-secondary" (click)="publish()" [disabled]="publishing()">
           @if (publishing()) { Publishing… } @else { <i class="fa-solid fa-check"></i> Publish }
         </button>
@@ -51,6 +58,16 @@ interface Site { id: string; name: string; status: string; tenantId: string; pag
           </button>
         </div>
       }
+      @if (s.pages.length === 0) {
+        <div class="p-8 text-center">
+          <p class="text-sm text-fg-muted mb-3">This site has no pages yet.</p>
+          <div class="flex flex-wrap items-center justify-center gap-2">
+            <button class="mc-btn-primary" (click)="showAddPage.set(true)">Add first page</button>
+            <a [routerLink]="['/app/studio', s.tenantId]" class="mc-btn-secondary">Open Studio</a>
+            <a routerLink="/app/marketplace" class="mc-btn-ghost">Browse templates</a>
+          </div>
+        </div>
+      } @else {
       <ul class="divide-y divide-white/5">
         @for (p of s.pages; track p.id) {
           <li class="px-5 py-4 flex items-center justify-between">
@@ -66,6 +83,7 @@ interface Site { id: string; name: string; status: string; tenantId: string; pag
           </li>
         }
       </ul>
+      }
     </div>
   }
   `,
@@ -82,6 +100,10 @@ export class SiteDetailPage implements OnInit {
   protected readonly addingPage = signal(false);
   protected newPageTitle = '';
   protected newPageSlug = '';
+
+  protected firstPageId(site: Site): string | null {
+    return site.pages[0]?.id ?? null;
+  }
 
   ngOnInit() {
     this.api.get<Site>(`/sites/${this.id}`).subscribe({

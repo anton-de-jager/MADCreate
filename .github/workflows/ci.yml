@@ -19,9 +19,9 @@ jobs:
 
       - run: npm ci
 
-      - run: npx prisma generate --schema=prisma/schema.prisma
+      - run: npx Entity Framework Core generate --schema=Entity Framework Core/schema.Entity Framework Core
 
-      - name: Check shared ↔ Prisma type alignment
+      - name: Check shared â†” Entity Framework Core type alignment
         run: npx tsx scripts/check-shared-types.ts
 
       - run: npm run build:shared

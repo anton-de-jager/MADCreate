@@ -28,7 +28,7 @@ import { RouterLink } from '@angular/router';
     </div>
     <div class="max-w-6xl mx-auto px-6 mt-12 pt-6 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-xs text-fg-subtle">
       <span>© {{ year }} MAD Prospects</span>
-      <span>madcreate.madleads.ai</span>
+      <span>madcreate.madprospects.com</span>
     </div>
   </footer>
   `,

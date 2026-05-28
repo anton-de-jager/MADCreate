@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
 import { TenantContextService } from '../../core/services/tenant-context.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -28,7 +29,7 @@ interface Installed { id: string; catalog: Catalog; isEnabled: boolean; }
 @Component({
   selector: 'mc-integrations',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
   <div class="mb-8">
@@ -37,7 +38,10 @@ interface Installed { id: string; catalog: Catalog; isEnabled: boolean; }
   </div>
 
   @if (!tenant()) {
-    <div class="mc-card p-8 text-center text-fg-muted">Pick a tenant first.</div>
+    <div class="mc-card p-8 text-center">
+      <p class="text-fg-muted mb-3">Pick a tenant first.</p>
+      <a routerLink="/app/tenants" class="mc-btn-primary">Go to tenants</a>
+    </div>
   } @else if (loading()) {
     <!-- Two skeleton "categories" of three cards each — mirrors the real grid. -->
     @for (_ of [1,2]; track _) {
@@ -54,6 +58,15 @@ interface Installed { id: string; catalog: Catalog; isEnabled: boolean; }
         }
       </div>
     }
+  } @else if (catalog().length === 0) {
+    <div class="mc-card p-8 text-center">
+      <p class="text-fg-muted mb-2">No integrations are available yet.</p>
+      <p class="text-xs text-fg-subtle mb-5">MADCreate uses MADCloud for generation and Payfast.io for payments.</p>
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <a routerLink="/app/settings" [queryParams]="{ tab: 'billing' }" class="mc-btn-primary">Open Payfast billing</a>
+        <a routerLink="/app/growth" class="mc-btn-secondary">Open Growth Hub</a>
+      </div>
+    </div>
   } @else {
     @for (cat of categories(); track cat) {
       <h2 class="mc-heading text-sm uppercase tracking-wider text-fg-subtle mt-8 mb-3">{{ cat }}</h2>

@@ -115,13 +115,48 @@ interface Tenant { id: string; slug: string; name: string; status: string; indus
       <h2 class="mc-heading text-xl font-semibold mb-4">Quick actions</h2>
       <div class="grid md:grid-cols-3 gap-4">
         @for (a of actions; track a.label) {
-          <a [routerLink]="a.href" class="mc-card-hover p-5 flex items-center gap-4 group">
+          <a [routerLink]="a.href" [queryParams]="a.queryParams" class="mc-card-hover p-5 flex items-center gap-4 group">
             <div class="w-10 h-10 rounded-md bg-brand/10 grid place-items-center text-brand"><i [class]="a.icon"></i></div>
             <div>
               <div class="font-medium group-hover:text-brand transition-colors">{{ a.label }}</div>
               <div class="text-xs text-fg-subtle">{{ a.body }}</div>
             </div>
           </a>
+        }
+      </div>
+    </div>
+
+    <!-- Functionality map -->
+    <div class="mt-10">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="mc-heading text-xl font-semibold">Command Center</h2>
+          <p class="text-sm text-fg-muted mt-1">Every major MADCreate capability, grouped by workflow.</p>
+        </div>
+      </div>
+      <div class="grid lg:grid-cols-3 gap-4">
+        @for (group of visibleCommandGroups(); track group.title) {
+          <section class="mc-card p-5">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-md bg-brand/10 grid place-items-center text-brand">
+                <i [class]="group.icon"></i>
+              </div>
+              <h3 class="mc-heading font-semibold">{{ group.title }}</h3>
+            </div>
+            <div class="grid gap-2">
+              @for (tool of group.items; track tool.label) {
+                <a [routerLink]="tool.href"
+                   [queryParams]="tool.queryParams"
+                   class="flex items-center justify-between gap-3 rounded-md border border-white/5 px-3 py-2 text-sm hover:border-brand/40 hover:bg-white/[0.03] transition-colors group">
+                  <span class="min-w-0">
+                    <span class="block font-medium group-hover:text-brand">{{ tool.label }}</span>
+                    <span class="block text-xs text-fg-subtle truncate">{{ tool.body }}</span>
+                  </span>
+                  <i class="fa-solid fa-arrow-right text-xs text-fg-subtle group-hover:text-brand"></i>
+                </a>
+              }
+            </div>
+          </section>
         }
       </div>
     </div>
@@ -143,15 +178,86 @@ export class HomePage implements OnInit {
   protected readonly stats = signal<Array<{ label: string; value: string; hint?: string }>>([
     { label: 'Tenants', value: '0' },
     { label: 'Sites',   value: '0' },
-    { label: 'AI gens', value: '0', hint: 'last 30 days' },
+    { label: 'MADCloud', value: '0', hint: 'last 30 days' },
     { label: 'Deploys', value: '0', hint: 'last 30 days' },
   ]);
 
-  protected readonly actions = [
+  protected readonly isSuperAdmin = this.auth.isSuperAdmin;
+
+  protected readonly actions: Array<{ icon: string; label: string; href: string; body: string; queryParams?: Record<string, string> }> = [
     { icon: 'fa-solid fa-wand-magic-sparkles', label: 'Generate a site', href: '/app/onboarding', body: 'AI wizard, end to end' },
     { icon: 'fa-solid fa-globe', label: 'Connect a domain', href: '/app/domains', body: 'CNAME or apex' },
+    { icon: 'fa-solid fa-chart-simple', label: 'Open Growth Hub', href: '/app/growth', body: 'Launch, health, experiments' },
     { icon: 'fa-solid fa-arrow-up', label: 'Deploy', href: '/app/deployments', body: 'Internal, FTP, or webhook' },
+    { icon: 'fa-solid fa-credit-card', label: 'Billing', href: '/app/settings', body: 'Payfast subscription', queryParams: { tab: 'billing' } },
+    { icon: 'fa-solid fa-rectangle-list', label: 'Forms & Leads', href: '/app/leads', body: 'Lead capture inbox' },
   ];
+
+  protected readonly commandGroups: Array<{
+    title: string;
+    icon: string;
+    items: Array<{ label: string; href: string; body: string; queryParams?: Record<string, string>; adminOnly?: boolean }>;
+  }> = [
+    {
+      title: 'Create',
+      icon: 'fa-solid fa-wand-magic-sparkles',
+      items: [
+        { label: 'Generate site', href: '/app/onboarding', body: 'Create a tenant and MADCloud site draft' },
+        { label: 'Manage tenants', href: '/app/tenants', body: 'Clients, slugs, sites, and domains' },
+        { label: 'Template marketplace', href: '/app/marketplace', body: 'Reusable starting points' },
+      ],
+    },
+    {
+      title: 'Build',
+      icon: 'fa-solid fa-screwdriver-wrench',
+      items: [
+        { label: 'Edit sites', href: '/app/sites', body: 'Open site detail and page builder' },
+        { label: 'Themes', href: '/app/themes', body: 'Brand, colors, typography' },
+        { label: 'Media', href: '/app/media', body: 'Images and assets' },
+      ],
+    },
+    {
+      title: 'Publish',
+      icon: 'fa-solid fa-rocket',
+      items: [
+        { label: 'Domains', href: '/app/domains', body: 'DNS, SSL, and platform hostnames' },
+        { label: 'Deployments', href: '/app/deployments', body: 'Release history and deploy now' },
+        { label: 'Integrations', href: '/app/integrations', body: 'Payfast, MADCloud, and approved apps' },
+      ],
+    },
+    {
+      title: 'Grow',
+      icon: 'fa-solid fa-chart-line',
+      items: [
+        { label: 'Forms & Leads', href: '/app/leads', body: 'Captured submissions and statuses' },
+        { label: 'Analytics', href: '/app/analytics', body: 'Traffic and conversion signals' },
+        { label: 'Growth Hub', href: '/app/growth', body: 'Launch readiness and optimization' },
+      ],
+    },
+    {
+      title: 'Operate',
+      icon: 'fa-solid fa-gear',
+      items: [
+        { label: 'Billing', href: '/app/settings', body: 'Payfast subscription management', queryParams: { tab: 'billing' } },
+        { label: 'Settings', href: '/app/settings', body: 'Workspace, profile, and preferences' },
+      ],
+    },
+    {
+      title: 'Admin',
+      icon: 'fa-solid fa-shield-halved',
+      items: [
+        { label: 'MADCloud', href: '/app/ai', body: 'Task queue and prompt operations', adminOnly: true },
+        { label: 'Super Admin', href: '/app/admin', body: 'Platform diagnostics and controls', adminOnly: true },
+      ],
+    },
+  ];
+
+  protected visibleCommandGroups() {
+    const isAdmin = this.isSuperAdmin();
+    return this.commandGroups
+      .map((group) => ({ ...group, items: group.items.filter((item) => !item.adminOnly || isAdmin) }))
+      .filter((group) => group.items.length > 0);
+  }
 
   ngOnInit() {
     // Pending plan from pricing → register flow.
@@ -194,7 +300,7 @@ export class HomePage implements OnInit {
         this.stats.set([
           { label: 'Tenants', value: String(s.tenants) },
           { label: 'Sites',   value: String(s.sites) },
-          { label: 'AI gens', value: String(s.generations), hint: 'last 30 days' },
+          { label: 'MADCloud', value: String(s.generations), hint: 'last 30 days' },
           { label: 'Deploys', value: String(s.deployments), hint: 'last 30 days' },
         ]);
         this.statsLoading.set(false);
