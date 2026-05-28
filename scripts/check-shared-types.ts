@@ -25,9 +25,7 @@ import type {
 } from '@madcreate/shared';
 
 // AIProvider in shared includes lowercase aliases â€” only assert the uppercase subset.
-// OPENAI/ANTHROPIC removed: all AI access now flows through MADCloud / Claude Code on the
-// operator's desktop. CLAUDE_CODE_MANUAL is the MADCloud-routed default.
-type SharedAIProviderUpper = 'GOOGLE' | 'CUSTOM' | 'CLAUDE_CODE_MANUAL' | 'MOCK';
+type SharedAIProviderUpper = 'OPENAI' | 'ANTHROPIC' | 'GOOGLE' | 'CUSTOM' | 'CLAUDE_CODE_MANUAL' | 'MOCK';
 
 // Bidirectional assignability checks: if either direction fails, the types have
 // diverged.  The "_assert" variables are never used at runtime â€” they exist
