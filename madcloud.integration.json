@@ -2,7 +2,7 @@
   "product": "MADCreate",
   "slug": "madcreate",
   "sourceCode": "C:\\Code\\madprospects\\madcreate",
-  "repository": "https://github.com/mad-leads/madcreate",
+  "repository": "https://github.com/anton-de-jager/MADCreate",
   "madcloud": {
     "role": "MADCloud is the only AI service provider for this application.",
     "apiUrlProd": "https://madcloudapi.madprospects.com",

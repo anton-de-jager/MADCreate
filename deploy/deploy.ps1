@@ -142,7 +142,7 @@ export const environment = {
 "@
     [System.IO.File]::WriteAllText($envTsPath, $prodEnv, (New-Object System.Text.UTF8Encoding $false))
     Push-Location (Join-Path $scriptRoot 'apps\web')
-    try { Invoke-Pnpm @('run', 'build', '--', '--configuration', 'production', '--progress=false') }
+    try { Invoke-Pnpm @('run', 'build', '--configuration', 'production', '--progress=false') }
     finally { Pop-Location }
   } finally {
     [System.IO.File]::WriteAllText($envTsPath, $envBackup, (New-Object System.Text.UTF8Encoding $false))
@@ -161,6 +161,33 @@ RewriteRule ^ - [L]
 RewriteRule ^ /index.html [L]
 '@
   [System.IO.File]::WriteAllText((Join-Path $frontendBuild '.htaccess'), $htaccess, [System.Text.Encoding]::ASCII)
+
+  # IIS SPA fallback (Plesk hosting): all non-file requests rewrite to index.html.
+  $feWebConfig = @'
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <system.webServer>
+    <rewrite>
+      <rules>
+        <rule name="SPA Routes" stopProcessing="true">
+          <match url=".*" />
+          <conditions logicalGrouping="MatchAll">
+            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+            <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+            <add input="{REQUEST_URI}" pattern="^/api" negate="true" />
+          </conditions>
+          <action type="Rewrite" url="/index.html" />
+        </rule>
+      </rules>
+    </rewrite>
+    <staticContent>
+      <remove fileExtension=".webmanifest" />
+      <mimeMap fileExtension=".webmanifest" mimeType="application/manifest+json" />
+    </staticContent>
+  </system.webServer>
+</configuration>
+'@
+  [System.IO.File]::WriteAllText((Join-Path $frontendBuild 'web.config'), $feWebConfig, (New-Object System.Text.UTF8Encoding $false))
   Write-Ok "Frontend built at $frontendBuild"
 } elseif (-not $SkipFrontend) {
   Write-Step 2 6 'Frontend build skipped'
@@ -169,7 +196,7 @@ RewriteRule ^ /index.html [L]
 if (-not $SkipBackend -and -not $SkipBuild) {
   Write-Step 3 6 'Publishing .NET Core API'
   if (Test-Path -LiteralPath $apiPublish) { Remove-Item -LiteralPath $apiPublish -Recurse -Force }
-  dotnet publish (Join-Path $scriptRoot 'apps\api\MADCreate.Api.csproj') -c Release -o $apiPublish --nologo --no-restore
+  dotnet publish (Join-Path $scriptRoot 'apps\api\MADCreate.Api.csproj') -c Release -o $apiPublish --nologo
   if ($LASTEXITCODE -ne 0) { throw "dotnet publish failed with exit code $LASTEXITCODE" }
 
   $defaultUserEmail = Optional-Key $cfg 'DEFAULT_USER_EMAIL' 'admin@madprospects.com'

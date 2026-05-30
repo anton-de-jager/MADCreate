@@ -4,9 +4,9 @@ packages:
 allowBuilds:
   '@parcel/watcher': true
   '@scarf/scarf': true
-  cpu-features: set this to true or false
+  cpu-features: true
   esbuild: true
-  lmdb: set this to true or false
-  msgpackr-extract: set this to true or false
-  ssh2: set this to true or false
+  lmdb: true
+  msgpackr-extract: true
+  ssh2: true
 storeDir: C:/Code/.pnpm

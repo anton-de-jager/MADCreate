@@ -5,7 +5,8 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 3013",
-    "build": "ng build && node ../../scripts/generate-version.mjs",
+    "build": "ng build",
+    "postbuild": "node ../../scripts/generate-version.mjs",
     "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "lint": "ng lint",
